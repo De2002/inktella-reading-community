@@ -611,7 +611,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      count_words: { Args: { html: string }; Returns: number }
       get_consensus: {
         Args: { _book_id: string }
         Returns: {
@@ -636,6 +635,10 @@ export type Database = {
         Returns: boolean
       }
       is_active_member: { Args: { _uid: string }; Returns: boolean }
+      make_dedupe_key: {
+        Args: { _author: string; _title: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
