@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
 import { EmptyState, ReviewCard, ThoughtCard, type ReviewCardData, type ThoughtCardData } from "@/components/ContentCards";
 import { ReaderConsensus } from "@/components/ReaderConsensus";
-import { ReadingStatus, STATUS_LABELS } from "@/components/ReadingStatus";
+import { ReadingStatus } from "@/components/ReadingStatus";
 import { Recometer } from "@/components/Recometer";
 import { ReportButton } from "@/components/SocialButtons";
 import { Button } from "@/components/ui/button";
@@ -73,12 +73,11 @@ function BookPage() {
   const { tab = "overview" } = Route.useSearch();
   const { data: book } = useSuspenseQuery(bookQuery(slug));
   const [showFull, setShowFull] = useState(false);
-  if (!book) return null;
-  const authors = authorNames(book);
-
   const counts = useQuery({
-    queryKey: ["book-counts", book.id],
+    queryKey: ["book-counts", book?.id],
+    enabled: !!book,
     queryFn: async () => {
+      if (!book) return { reviews: 0, thoughts: 0 };
       const [r, t] = await Promise.all([
         supabase.from("reviews").select("id", { count: "exact", head: true }).eq("book_id", book.id).eq("is_draft", false).eq("is_hidden", false),
         supabase.from("short_thoughts").select("id", { count: "exact", head: true }).eq("book_id", book.id).eq("is_hidden", false),
@@ -86,6 +85,8 @@ function BookPage() {
       return { reviews: r.count ?? 0, thoughts: t.count ?? 0 };
     },
   });
+  if (!book) return null;
+  const authors = authorNames(book);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -340,4 +341,3 @@ function Activity({ bookId }: { bookId: string }) {
   );
 }
 
-export { STATUS_LABELS };
