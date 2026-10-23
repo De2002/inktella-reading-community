@@ -54,7 +54,6 @@ export const Route = createFileRoute("/u/$username")({
   component: Profile,
 });
 
-type Tab = "reviews" | "thoughts" | "want" | "reading" | "read" | "following";
 type DrawerKind = "hire" | "support" | null;
 
 const statDefinitions = [
@@ -85,7 +84,6 @@ function WavyDivider() {
 function Profile() {
   const { username } = Route.useParams();
   const { userId } = useAuth();
-  const [tab, setTab] = useState<Tab>("reviews");
   const [drawer, setDrawer] = useState<DrawerKind>(null);
   const p = useQuery({
     queryKey: ["profile", username],
@@ -119,14 +117,6 @@ function Profile() {
       </div>
     );
   const prof = p.data;
-  const tabs: [Tab, string][] = [
-    ["reviews", "Reviewed"],
-    ["thoughts", "Thoughts"],
-    ["want", "Want to Read"],
-    ["reading", "Reading"],
-    ["read", "Read"],
-    ["following", "Following"],
-  ];
   const stats = statDefinitions.map(([label, key, Icon]) => ({
     label,
     key,
@@ -215,34 +205,17 @@ function Profile() {
           </a>
         )}
       </section>
+      <section>
+        <SectionTitle>Reviewed</SectionTitle>
+        <div className="mt-5">
+          <UserReviews uid={prof.id} />
+        </div>
+      </section>
       <WavyDivider />
       <section>
-        <div className="flex items-end justify-between gap-4">
-          <SectionTitle>{tabs.find(([key]) => key === tab)?.[1] ?? "Reviewed"}</SectionTitle>
-          <div className="flex max-w-full gap-4 overflow-x-auto">
-            {tabs.map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={cn(
-                  "shrink-0 border-b-2 pb-2 text-sm",
-                  tab === key
-                    ? "border-foreground font-medium"
-                    : "border-transparent text-muted-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <SectionTitle>Thoughts</SectionTitle>
         <div className="mt-5">
-          {tab === "reviews" && <UserReviews uid={prof.id} />}
-          {tab === "thoughts" && <UserThoughts uid={prof.id} />}
-          {(tab === "want" || tab === "reading" || tab === "read") && (
-            <Shelf uid={prof.id} status={tab} />
-          )}
-          {tab === "following" && <FollowingList uid={prof.id} />}
+          <UserThoughts uid={prof.id} />
         </div>
       </section>
       <WavyDivider />
@@ -252,8 +225,28 @@ function Profile() {
       </section>
       <WavyDivider />
       <section>
+        <SectionTitle>Want to Read</SectionTitle>
+        <Shelf uid={prof.id} status="want" />
+      </section>
+      <WavyDivider />
+      <section>
+        <SectionTitle>Reading</SectionTitle>
+        <Shelf uid={prof.id} status="reading" />
+      </section>
+      <WavyDivider />
+      <section>
+        <SectionTitle>Read</SectionTitle>
+        <Shelf uid={prof.id} status="read" />
+      </section>
+      <WavyDivider />
+      <section>
         <SectionTitle>My Favourites</SectionTitle>
         <Shelf uid={prof.id} status="read" />
+      </section>
+      <WavyDivider />
+      <section>
+        <SectionTitle>Following</SectionTitle>
+        <FollowingList uid={prof.id} />
       </section>
       <WavyDivider />
       <section>
