@@ -14,7 +14,7 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookCover } from "@/components/BookCover";
 import {
   EmptyState,
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/u/$username")({
   component: Profile,
 });
 
-type DrawerKind = "hire" | "support" | null;
+type DrawerKind = "hire" | "support" | "reviews" | null;
 
 const statDefinitions = [
   ["Reviews", "reviews", BookOpen],
@@ -174,7 +174,7 @@ function Profile() {
       <WavyDivider />
       <section
         aria-label="Profile statistics"
-        className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8"
+        className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-8"
       >
         {stats.map(({ label, value, Icon }) => (
           <div key={label} className="rounded-lg border bg-card px-2 py-3 text-center">
@@ -205,10 +205,11 @@ function Profile() {
           </a>
         )}
       </section>
+      <WavyDivider />
       <section>
         <SectionTitle>Reviewed</SectionTitle>
         <div className="mt-5">
-          <UserReviews uid={prof.id} />
+          <ReviewedCovers uid={prof.id} onViewMore={() => setDrawer("reviews")} />
         </div>
       </section>
       <WavyDivider />
@@ -281,15 +282,23 @@ function Profile() {
               <DrawerTitle>
                 {drawer === "hire"
                   ? `Work with ${prof.display_name}`
-                  : `Support ${prof.display_name}`}
+                  : drawer === "reviews"
+                    ? `More reviews by ${prof.display_name}`
+                    : `Support ${prof.display_name}`}
               </DrawerTitle>
               <DrawerDescription>
                 {drawer === "hire"
                   ? "Book reviews, editorial notes and thoughtful recommendations."
-                  : "A little support helps keep independent reading and reviewing going."}
+                  : drawer === "reviews"
+                    ? "Browse the rest of this reader's reviewed books."
+                    : "A little support helps keep independent reading and reviewing going."}
               </DrawerDescription>
             </DrawerHeader>
-            {drawer === "hire" ? (
+            {drawer === "reviews" ? (
+              <div className="max-h-[55vh] overflow-y-auto px-4 pb-4">
+                <UserReviews uid={prof.id} />
+              </div>
+            ) : drawer === "hire" ? (
               <div className="px-4 pb-4">
                 <div className="rounded-lg bg-muted p-4 text-sm">
                   <p className="font-medium">Reviewer rates</p>
@@ -376,6 +385,44 @@ function SocialLink({
   );
 }
 
+function ReviewedCovers({ uid, onViewMore }: { uid: string; onViewMore: () => void }) {
+  const q = useQuery({
+    queryKey: ["reviewed-covers", uid],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("reviews")
+          .select(REVIEW_SELECT + ", is_draft")
+          .eq("user_id", uid)
+          .eq("is_draft", false)
+          .order("updated_at", { ascending: false })
+          .limit(8)
+      ).data as unknown as ReviewCardData[],
+  });
+  const books = (q.data ?? [])
+    .map((review) => review.books)
+    .filter((book): book is NonNullable<ReviewCardData["books"]> => Boolean(book));
+  if (q.isSuccess && books.length === 0) return <EmptyState title="No reviews yet" />;
+  return (
+    <div>
+      <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+        {books.map((book) => (
+          <Link key={book.slug} to="/books/$slug" params={{ slug: book.slug }} className="min-w-0">
+            <BookCover src={book.cover_url} title={book.title} />
+          </Link>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onViewMore}
+        className="mt-5 block w-full text-center text-sm font-medium text-primary hover:underline"
+      >
+        View more
+      </button>
+    </div>
+  );
+}
+
 function UserReviews({ uid }: { uid: string }) {
   const { userId } = useAuth();
   const q = useQuery({
@@ -402,6 +449,7 @@ function UserReviews({ uid }: { uid: string }) {
   );
 }
 function UserThoughts({ uid }: { uid: string }) {
+  const [active, setActive] = useState(0);
   const q = useQuery({
     queryKey: ["user-thoughts", uid],
     queryFn: async () =>
@@ -415,12 +463,27 @@ function UserThoughts({ uid }: { uid: string }) {
           .limit(100)
       ).data as unknown as ThoughtCardData[],
   });
-  if (q.isSuccess && q.data.length === 0) return <EmptyState title="No short thoughts yet" />;
+  const thoughts = q.data ?? [];
+  useEffect(() => {
+    if (thoughts.length <= 2) return;
+    const timer = window.setInterval(() => {
+      setActive((current) => (current + 1) % thoughts.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [thoughts.length]);
+  if (q.isSuccess && thoughts.length === 0) return <EmptyState title="No short thoughts yet" />;
+  if (thoughts.length <= 2) {
+    return (
+      <div>
+        {thoughts.map((t) => (
+          <ThoughtCard key={t.id} t={t} />
+        ))}
+      </div>
+    );
+  }
   return (
     <div>
-      {(q.data ?? []).map((t) => (
-        <ThoughtCard key={t.id} t={t} />
-      ))}
+      <ThoughtCard key={thoughts[active].id} t={thoughts[active]} />
     </div>
   );
 }
