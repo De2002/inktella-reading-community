@@ -22,6 +22,13 @@
       "when": 1792591654016,
       "tag": "0002_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792731385126,
+      "tag": "0003_book_submit_rpc",
+      "breakpoints": true
     }
   ]
 }
