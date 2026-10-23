@@ -14,7 +14,7 @@ import { importOpenLibraryBook } from "@/lib/books.functions";
 import { authorNames, BOOK_SELECT, REVIEW_SELECT } from "@/lib/queries";
 
 export const Route = createFileRoute("/search")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s.q === "string" ? s.q : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? s["q"] : "" }),
   head: () => ({
     meta: [
       { title: "Search books, authors and reviewers — Inktella" },

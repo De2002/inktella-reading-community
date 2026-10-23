@@ -46,7 +46,10 @@ export function ReviewEditor({ initial, onChange }: { initial: string; onChange:
         {btn(editor.isActive("orderedList"), () => editor.chain().focus().toggleOrderedList().run(), <ListOrdered className="h-4 w-4" />, "Numbered list")}
         {btn(editor.isActive("blockquote"), () => editor.chain().focus().toggleBlockquote().run(), <Quote className="h-4 w-4" />, "Quote")}
         {btn(editor.isActive("link"), () => {
-          if (editor.isActive("link")) return editor.chain().focus().unsetLink().run();
+          if (editor.isActive("link")) {
+            editor.chain().focus().unsetLink().run();
+            return;
+          }
           const url = prompt("Link address (https://…)");
           if (url && /^https?:\/\//.test(url)) editor.chain().focus().setLink({ href: url }).run();
         }, <Link2 className="h-4 w-4" />, "Link")}

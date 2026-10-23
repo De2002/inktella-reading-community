@@ -16,9 +16,9 @@ import { uploadImage } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/write")({
-  validateSearch: (s: Record<string, unknown>): { book?: string; id?: string } => ({
-    book: typeof s.book === "string" ? s.book : undefined,
-    id: typeof s.id === "string" ? s.id : undefined,
+  validateSearch: (s: Record<string, unknown>): { book?: string | undefined; id?: string | undefined } => ({
+    book: typeof s["book"] === "string" ? s["book"] : undefined,
+    id: typeof s["id"] === "string" ? s["id"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -93,9 +93,9 @@ function WritePage() {
 
   const save = async (publish: boolean) => {
     if (!bookId) return;
-    if (!title.trim()) return toast.error("Give your review a title");
-    if (affUrl && !isHttpUrl(affUrl)) return toast.error("The purchase link should start with https://");
-    if (publish && !enough) return toast.error(`A full review needs at least ${MIN_REVIEW_WORDS} words.`);
+    if (!title.trim()) { toast.error("Give your review a title"); return; }
+    if (affUrl && !isHttpUrl(affUrl)) { toast.error("The purchase link should start with https://"); return; }
+    if (publish && !enough) { toast.error(`A full review needs at least ${MIN_REVIEW_WORDS} words.`); return; }
     setBusy(true);
     const payload = {
       book_id: bookId,
@@ -114,7 +114,7 @@ function WritePage() {
       ? await supabase.from("reviews").update(payload).eq("id", reviewId).select("id").single()
       : await supabase.from("reviews").insert(payload).select("id").single();
     setBusy(false);
-    if (res.error) return toast.error(res.error.message);
+    if (res.error) { toast.error(res.error.message); return; }
     setReviewId(res.data.id);
     if (publish) {
       toast.success("Published");

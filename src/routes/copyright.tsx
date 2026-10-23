@@ -50,7 +50,7 @@ function Copyright() {
               contact_email: email,
               reporter_id: userId,
             });
-            if (error) return toast.error(error.message);
+            if (error) { toast.error(error.message); return; }
             setDone(true);
           }}
         >

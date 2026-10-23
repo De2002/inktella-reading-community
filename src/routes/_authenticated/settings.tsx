@@ -53,7 +53,7 @@ function Settings() {
         avatar_url: f.avatar_url || null,
       })
       .eq("id", userId!);
-    if (error) return toast.error(error.message.includes("duplicate") ? "That username is taken" : error.message);
+    if (error) { toast.error(error.message.includes("duplicate") ? "That username is taken" : error.message); return; }
     toast.success("Profile saved");
     refreshProfile();
   };
