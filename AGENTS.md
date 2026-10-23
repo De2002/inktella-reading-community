@@ -8,3 +8,10 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Architecture rules
+- Community rules (review word minimum, vote uniqueness, vote tallies, privileged columns) are enforced in the database via constraints, triggers and security-definer RPCs; the UI only mirrors them via src/lib/rules.ts. Why: the frontend must never be authoritative.
+- Vote results are read only through get_recometer / get_consensus RPCs; raw vote rows are visible only to their owner. Why: privacy and server-calculated totals.
+- Book creation goes through server functions in src/lib/books.functions.ts (Open Library import + manual submission with dedupe). Why: metadata is fetched/validated server-side and deduplicated.
+- Uploads go to the private "uploads" bucket under the user's id folder and are referenced by long-lived signed URLs. Why: public buckets are blocked in this workspace.
+- User HTML (reviews) is sanitised with DOMPurify at render time (SafeHtml). Why: safe handling of user content.
