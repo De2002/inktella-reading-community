@@ -611,6 +611,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_book: {
+        Args: {
+          _authors: Json
+          _category?: Database["public"]["Enums"]["book_category"]
+          _cover_url?: string
+          _genres?: string[]
+          _isbn?: string
+          _openlibrary_key?: string
+          _publisher?: string
+          _subtitle?: string
+          _synopsis?: string
+          _title: string
+          _year?: number
+        }
+        Returns: {
+          existed: boolean
+          slug: string
+          status: Database["public"]["Enums"]["book_status"]
+        }[]
+      }
       get_consensus: {
         Args: { _book_id: string }
         Returns: {
