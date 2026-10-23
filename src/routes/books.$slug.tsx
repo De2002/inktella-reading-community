@@ -34,8 +34,8 @@ const bookQuery = (slug: string) =>
   });
 
 export const Route = createFileRoute("/books/$slug")({
-  validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({
-    tab: TABS.includes(s.tab as Tab) ? (s.tab as Tab) : undefined,
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab | undefined } => ({
+    tab: TABS.includes(s["tab"] as Tab) ? (s["tab"] as Tab) : undefined,
   }),
   loader: async ({ context, params }) => {
     const book = await context.queryClient.ensureQueryData(bookQuery(params.slug));
