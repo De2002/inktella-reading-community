@@ -149,14 +149,17 @@ function Books() {
   });
   const save = useMutation({
     mutationFn: async () => {
-      const { id, title, subtitle, synopsis, cover_url, publication_year, publisher, isbn, status } = editing;
-      const { error } = await supabase.from("books").update({ title, subtitle, synopsis, cover_url: cover_url || null, publication_year: publication_year ? Number(publication_year) : null, publisher, isbn, status }).eq("id", id);
+      const { id, title, subtitle, synopsis, cover_url, publication_year, publisher, isbn, status, language, category } = editing;
+      const genres = (Array.isArray(editing.genres) ? editing.genres : String(editing.genres ?? "").split(",")).map((genre: string) => genre.trim()).filter(Boolean);
+      const { error } = await supabase.from("books").update({ title, subtitle, synopsis, cover_url: cover_url || null, publication_year: publication_year ? Number(publication_year) : null, publisher, isbn, status, genres, language: language || null, category }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Saved");
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["admin-books"] });
+      qc.invalidateQueries({ queryKey: ["book"] });
+      qc.invalidateQueries({ queryKey: ["search-local"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -175,9 +178,11 @@ function Books() {
       </div>
       {editing && (
         <div className="mt-4 space-y-2 rounded-lg border bg-card p-4">
-          {(["title", "subtitle", "cover_url", "publication_year", "publisher", "isbn"] as const).map((k) => (
+          {(["title", "subtitle", "cover_url", "publication_year", "publisher", "isbn", "language"] as const).map((k) => (
             <Input key={k} placeholder={k.replace("_", " ")} value={editing[k] ?? ""} onChange={(e) => setEditing({ ...editing, [k]: e.target.value })} />
           ))}
+          <Input aria-label="Genres" placeholder="Genres, separated by commas" value={Array.isArray(editing.genres) ? editing.genres.join(", ") : editing.genres ?? ""} onChange={(e) => setEditing({ ...editing, genres: e.target.value })} />
+          <select aria-label="Book category" value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="h-9 rounded-md border bg-card px-2 text-sm">{["fiction", "nonfiction", "poetry", "biography", "other"].map((category) => <option key={category} value={category}>{category}</option>)}</select>
           <Textarea rows={4} value={editing.synopsis} onChange={(e) => setEditing({ ...editing, synopsis: e.target.value })} />
           <select value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value })} className="h-9 rounded-md border bg-card px-2 text-sm">
             <option value="published">published</option><option value="pending">pending</option><option value="rejected">rejected</option>
