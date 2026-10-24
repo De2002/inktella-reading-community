@@ -15,3 +15,5 @@
 - Book creation goes through the create_book security-definer RPC (called from src/lib/books.functions.ts with the user's session; dedupe + slug + authors in SQL). Why: the app must not need a service role key, so it can run on any host with only the publishable key.
 - Uploads go to the private "uploads" bucket under the user's id folder and are referenced by long-lived signed URLs. Why: public buckets are blocked in this workspace.
 - User HTML (reviews) is sanitised with DOMPurify at render time (SafeHtml). Why: safe handling of user content.
+- Profile recommendations and favourites use separate book_lists records; view history is owner-only in book_views. Why: shelves must reflect independent choices and browsing history must remain private.
+- Author catalogue details are read through a bounded Open Library server function; stored author overrides take precedence. Why: optional external metadata must not require a service-role key or overwrite curated information.
