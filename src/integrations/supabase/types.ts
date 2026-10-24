@@ -16,33 +16,45 @@ export type Database = {
     Tables: {
       authors: {
         Row: {
+          alternate_names: string[]
           bio: string
+          birth_date: string | null
           claimed_by: string | null
           created_at: string
+          death_date: string | null
           id: string
           name: string
           name_key: string
           openlibrary_key: string | null
+          photo_url: string | null
           website: string | null
         }
         Insert: {
+          alternate_names?: string[]
           bio?: string
+          birth_date?: string | null
           claimed_by?: string | null
           created_at?: string
+          death_date?: string | null
           id?: string
           name: string
           name_key: string
           openlibrary_key?: string | null
+          photo_url?: string | null
           website?: string | null
         }
         Update: {
+          alternate_names?: string[]
           bio?: string
+          birth_date?: string | null
           claimed_by?: string | null
           created_at?: string
+          death_date?: string | null
           id?: string
           name?: string
           name_key?: string
           openlibrary_key?: string | null
+          photo_url?: string | null
           website?: string | null
         }
         Relationships: []
@@ -73,6 +85,61 @@ export type Database = {
           },
           {
             foreignKeyName: "book_authors_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_lists: {
+        Row: {
+          book_id: string
+          created_at: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_lists_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_views: {
+        Row: {
+          book_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          book_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          book_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_views_book_id_fkey"
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "books"
@@ -243,6 +310,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string
+          coffee_url: string | null
+          contact_url: string | null
           created_at: string
           display_name: string
           expertise: string
@@ -250,6 +319,9 @@ export type Database = {
           is_professional: boolean
           is_suspended: boolean
           is_verified: boolean
+          paypal_url: string | null
+          publication_details: string
+          reviewer_rates: string
           support_url: string | null
           username: string
           website: string | null
@@ -257,6 +329,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string
+          coffee_url?: string | null
+          contact_url?: string | null
           created_at?: string
           display_name?: string
           expertise?: string
@@ -264,6 +338,9 @@ export type Database = {
           is_professional?: boolean
           is_suspended?: boolean
           is_verified?: boolean
+          paypal_url?: string | null
+          publication_details?: string
+          reviewer_rates?: string
           support_url?: string | null
           username: string
           website?: string | null
@@ -271,6 +348,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string
+          coffee_url?: string | null
+          contact_url?: string | null
           created_at?: string
           display_name?: string
           expertise?: string
@@ -278,6 +357,9 @@ export type Database = {
           is_professional?: boolean
           is_suspended?: boolean
           is_verified?: boolean
+          paypal_url?: string | null
+          publication_details?: string
+          reviewer_rates?: string
           support_url?: string | null
           username?: string
           website?: string | null
@@ -639,6 +721,7 @@ export type Database = {
           votes: number
         }[]
       }
+      get_profile_stats: { Args: { _user_id: string }; Returns: Json }
       get_recometer: {
         Args: { _book_id: string }
         Returns: {

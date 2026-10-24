@@ -5,6 +5,9 @@ import { EmptyState, ReviewCard, type ReviewCardData } from "@/components/Conten
 import { supabase } from "@/integrations/supabase/client";
 import { REVIEW_SELECT } from "@/lib/queries";
 import { recometerPercents } from "@/lib/rules";
+import { getAuthorCatalogueDetails } from "@/lib/authors.functions";
+import { authorAge } from "@/lib/author-dates";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/authors/$id")({
   head: () => ({
@@ -13,6 +16,8 @@ export const Route = createFileRoute("/authors/$id")({
       { name: "description", content: "Books by this author and independent reviews from Inktella readers." },
       { property: "og:title", content: "Author on Inktella" },
       { property: "og:description", content: "Books and independent reviews." },
+      { property: "og:type", content: "profile" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthorPage,
@@ -23,7 +28,8 @@ function AuthorPage() {
   const q = useQuery({
     queryKey: ["author", id],
     queryFn: async () => {
-      const { data } = await supabase.from("authors").select("*, book_authors(books(id, slug, title, cover_url, publication_year, status))").eq("id", id).maybeSingle();
+      const { data, error } = await supabase.from("authors").select("*, book_authors(books(id, slug, title, cover_url, publication_year, status))").eq("id", id).maybeSingle();
+      if (error) throw error;
       if (!data) return null;
       const books = (data.book_authors ?? []).map((b: any) => b.books).filter((b: any) => b?.status === "published");
       const ids = books.map((b: any) => b.id);
@@ -41,14 +47,38 @@ function AuthorPage() {
       return { author: data, books, tally, reviews: (reviews ?? []) as unknown as ReviewCardData[] };
     },
   });
+  const authorRecord = q.data?.author;
+  const details = useQuery({ queryKey: ["author-catalogue", authorRecord?.openlibrary_key, authorRecord?.name], enabled: !!authorRecord, staleTime: 86400000, queryFn: () => authorRecord ? getAuthorCatalogueDetails({ data: { key: authorRecord.openlibrary_key, name: authorRecord.name } }) : null });
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => {
+    setToday(new Date());
+    const timer = window.setInterval(() => setToday(new Date()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   if (q.isLoading) return <div className="mx-auto max-w-4xl px-4 py-16 text-muted-foreground">Loading…</div>;
   if (!q.data) return <div className="mx-auto max-w-4xl px-4 py-16 text-center"><h1 className="text-3xl">Author not found</h1></div>;
   const { author, books, tally, reviews } = q.data;
   const pct = recometerPercents(tally);
+  const bio = author.bio || details.data?.bio;
+  const aliases = author.alternate_names.length ? author.alternate_names : details.data?.alternate_names ?? [];
+  const photo = author.photo_url || details.data?.photo_url;
+  const birth = author.birth_date || details.data?.birth_date;
+  const death = author.death_date || details.data?.death_date;
+  const age = today ? authorAge(birth, death, today) : null;
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-4xl">{author.name}</h1>
-      {author.bio && <p className="mt-3 max-w-2xl font-reading text-lg">{author.bio}</p>}
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+        {photo && <AuthorPhoto key={photo} src={photo} name={author.name} />}
+        <div className="min-w-0"><h1 className="break-words text-4xl">{author.name}</h1>
+          {aliases.length > 0 && <p className="mt-3 text-sm text-muted-foreground">Also known as {aliases.join(", ")}</p>}
+          {(birth || death) && <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            {birth && <div><dt className="text-muted-foreground">Born</dt><dd>{birth}</dd></div>}
+            {death && <div><dt className="text-muted-foreground">Died</dt><dd>{death}</dd></div>}
+            {age !== null && <div><dt className="text-muted-foreground">{death ? "Age at death" : "Age"}</dt><dd>{age} years</dd></div>}
+          </dl>}
+        </div>
+      </div>
+      {bio && <p className="mt-6 max-w-3xl whitespace-pre-line font-reading text-lg leading-relaxed">{bio}</p>}
       {author.website && <a href={author.website} className="mt-2 inline-block text-sm text-primary" target="_blank" rel="noopener noreferrer">Official website</a>}
       <p className="mt-4 text-sm text-muted-foreground">
         {tally.total > 0 ? <>Overall Recometer: <b className="text-foreground">{pct.recommend}%</b> would recommend · {tally.total} votes</> : "No Recometer votes yet."}
@@ -67,4 +97,14 @@ function AuthorPage() {
       {reviews.length === 0 ? <div className="mt-4"><EmptyState title="No reviews yet" /></div> : reviews.map((r) => <ReviewCard key={r.id} r={r} />)}
     </div>
   );
+}
+
+function AuthorPhoto({ src, name }: { src: string; name: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return <img src={src} alt={name} onLoad={(event) => {
+    if (event.currentTarget.naturalWidth <= 1) setFailed(true);
+    else setLoaded(true);
+  }} onError={() => setFailed(true)} className={loaded ? "h-48 w-36 shrink-0 rounded-md object-cover" : "hidden"} />;
 }

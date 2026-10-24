@@ -12,6 +12,7 @@ import { PenLine, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
+import { BookLists } from "@/components/BookLists";
 import {
   EmptyState,
   ReviewCard,
@@ -166,6 +167,7 @@ function BookPage() {
       )}
       <div className="md:hidden">
         <MobileBookHeader book={book} authors={authors} />
+        <BookLists bookId={book.id} />
         <MobileSynopsis synopsis={book.synopsis} />
         <div className="mt-8">
           <Recometer bookId={book.id} mobile />
@@ -184,6 +186,7 @@ function BookPage() {
             <Link
               to="/books/$slug"
               params={{ slug }}
+              search={{ tab: "reviews" }}
               className={cn(
                 "border-b-2 px-1 pb-3 text-sm",
                 tab === "reviews"
@@ -220,6 +223,7 @@ function BookPage() {
           <div className="mt-4">
             <ReadingStatus bookId={book.id} />
           </div>
+          <BookLists bookId={book.id} />
           <Button asChild variant="outline" className="mt-2 w-full">
             <Link to="/write" search={{ book: book.slug }}>
               <PenLine className="mr-1 h-4 w-4" /> Write a review
@@ -362,7 +366,8 @@ function MobileBookHeader({
     <div className="flex gap-4 border-b pb-6">
       <BookCover src={book.cover_url} title={book.title} className="w-32 shrink-0" />
       <div className="min-w-0 pt-1">
-        <h1 className="text-2xl leading-tight">{book.title}</h1>
+        <h1 className="break-words text-2xl leading-tight">{book.title}</h1>
+        {book.subtitle && <p className="mt-1 text-sm text-muted-foreground">{book.subtitle}</p>}
         <div className="mt-4 flex flex-col items-start gap-2 text-sm">
           <span className="rounded bg-foreground px-2 py-1 text-background">{book.category}</span>
           <div className="flex flex-wrap items-center gap-2">
@@ -378,6 +383,13 @@ function MobileBookHeader({
               </Link>
             ))}
           </div>
+        </div>
+        {book.genres?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{book.genres.map((genre: string) => <Link key={genre} to="/search" search={{ q: genre }} className="max-w-full break-words rounded bg-secondary px-2 py-1 text-xs text-secondary-foreground">{genre}</Link>)}</div>}
+        <div className="mt-3 space-y-1 break-words text-xs text-muted-foreground">
+          {book.publication_year && <p>{book.publication_year}</p>}
+          {book.publisher && <p>{book.publisher}</p>}
+          {book.language && <p>{book.language}</p>}
+          {book.isbn && <p>ISBN {book.isbn}</p>}
         </div>
       </div>
     </div>

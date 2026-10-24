@@ -29,6 +29,13 @@
       "when": 1792731385126,
       "tag": "0003_book_submit_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792861306257,
+      "tag": "0004_connect_profiles_author_details",
+      "breakpoints": true
     }
   ]
 }

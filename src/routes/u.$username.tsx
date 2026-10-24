@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { REVIEW_SELECT, THOUGHT_SELECT } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import { isHttpUrl } from "@/lib/rules";
 
 export const Route = createFileRoute("/u/$username")({
   head: ({ params }) => ({
@@ -49,6 +50,10 @@ export const Route = createFileRoute("/u/$username")({
         name: "description",
         content: `Reviews, shelves and short thoughts from @${params.username} on Inktella.`,
       },
+      { property: "og:title", content: `@${params.username} — Inktella` },
+      { property: "og:description", content: `Reviews, shelves and short thoughts from @${params.username}.` },
+      { property: "og:type", content: "profile" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Profile,
@@ -92,20 +97,13 @@ function Profile() {
   });
   const pid = p.data?.id;
   const counts = useQuery({
-    queryKey: ["follow-counts", pid],
+    queryKey: ["profile-stats", pid],
     enabled: !!pid,
     queryFn: async () => {
-      const [a, b] = await Promise.all([
-        supabase
-          .from("follows")
-          .select("follower_id", { count: "exact", head: true })
-          .eq("following_id", pid!),
-        supabase
-          .from("follows")
-          .select("following_id", { count: "exact", head: true })
-          .eq("follower_id", pid!),
-      ]);
-      return { followers: a.count ?? 0, following: b.count ?? 0 };
+      if (!pid) return {} as Record<string, number>;
+      const { data, error } = await supabase.rpc("get_profile_stats", { _user_id: pid });
+      if (error) throw error;
+      return data as Record<string, number>;
     },
   });
   if (p.isLoading)
@@ -121,12 +119,7 @@ function Profile() {
     label,
     key,
     Icon,
-    value:
-      key === "followers"
-        ? (counts.data?.followers ?? 0)
-        : key === "following"
-          ? (counts.data?.following ?? 0)
-          : 0,
+    value: counts.data?.[key] ?? 0,
   }));
 
   return (
@@ -222,7 +215,7 @@ function Profile() {
       <WavyDivider />
       <section>
         <SectionTitle>Recommendations</SectionTitle>
-        <Shelf uid={prof.id} status="read" />
+        <ProfileList uid={prof.id} kind="recommendation" />
       </section>
       <WavyDivider />
       <section>
@@ -242,20 +235,14 @@ function Profile() {
       <WavyDivider />
       <section>
         <SectionTitle>My Favourites</SectionTitle>
-        <Shelf uid={prof.id} status="read" />
+        <ProfileList uid={prof.id} kind="favourite" />
       </section>
       <WavyDivider />
       <section>
         <SectionTitle>Following</SectionTitle>
         <FollowingList uid={prof.id} />
       </section>
-      <WavyDivider />
-      <section>
-        <SectionTitle>The Trail</SectionTitle>
-        <p className="text-sm text-muted-foreground">
-          Recent books viewed by this reader will appear here.
-        </p>
-      </section>
+      {userId === prof.id && <><WavyDivider /><section><SectionTitle>The Trail</SectionTitle><ProfileList uid={prof.id} kind="trail" /></section></>}
       <WavyDivider />
       <section>
         <SectionTitle>Elsewhere</SectionTitle>
@@ -270,9 +257,9 @@ function Profile() {
               <WalletCards />
             </SocialLink>
           )}
-          <SocialLink href="#" label="Email">
+          {prof.contact_url && isHttpUrl(prof.contact_url) && <SocialLink href={prof.contact_url} label="Contact">
             <Mail />
-          </SocialLink>
+          </SocialLink>}
         </div>
       </section>
       <Drawer open={drawer !== null} onOpenChange={(open) => !open && setDrawer(null)}>
@@ -302,26 +289,25 @@ function Profile() {
               <div className="px-4 pb-4">
                 <div className="rounded-lg bg-muted p-4 text-sm">
                   <p className="font-medium">Reviewer rates</p>
-                  <p className="mt-1 text-muted-foreground">
-                    Rates and publication details can be added from Settings.
-                  </p>
+                   <p className="mt-1 whitespace-pre-line text-muted-foreground">{prof.reviewer_rates || "No rates listed."}</p>
+                   {prof.publication_details && <p className="mt-3 whitespace-pre-line">{prof.publication_details}</p>}
                 </div>
-                <Button className="mt-4 w-full" disabled>
-                  Let&apos;s talk
-                </Button>
+                 {prof.contact_url && isHttpUrl(prof.contact_url) ? <Button className="mt-4 w-full" asChild><a href={prof.contact_url} target="_blank" rel="noopener noreferrer">Let&apos;s talk</a></Button> : <p className="mt-4 text-sm text-muted-foreground">No contact link provided.</p>}
               </div>
             ) : (
               <div className="grid gap-2 px-4 pb-4 sm:grid-cols-2">
-                <Button variant="outline" asChild disabled={!prof.support_url}>
-                  <a href={prof.support_url ?? "#"} target="_blank" rel="noopener noreferrer">
+                 {prof.coffee_url && <Button variant="outline" asChild>
+                   <a href={prof.coffee_url} target="_blank" rel="noopener noreferrer">
                     <Heart data-icon="inline-start" /> Buy me a coffee
                   </a>
-                </Button>
-                <Button variant="outline" asChild disabled={!prof.support_url}>
-                  <a href={prof.support_url ?? "#"} target="_blank" rel="noopener noreferrer">
+                 </Button>}
+                 {prof.paypal_url && <Button variant="outline" asChild>
+                   <a href={prof.paypal_url} target="_blank" rel="noopener noreferrer">
                     <WalletCards data-icon="inline-start" /> PayPal
                   </a>
-                </Button>
+                 </Button>}
+                 {prof.support_url && <Button variant="outline" asChild><a href={prof.support_url} target="_blank" rel="noopener noreferrer"><Heart />Support this reader</a></Button>}
+                 {!prof.coffee_url && !prof.paypal_url && !prof.support_url && <p className="text-sm text-muted-foreground">No support links provided.</p>}
               </div>
             )}
             <DrawerFooter>
@@ -353,12 +339,12 @@ function Bio({ text }: { text: string }) {
         {text}
       </p>
       {long && (
-        <button
+        <Button variant="ghost"
           className="mt-2 block w-full text-center text-sm font-medium text-primary hover:underline"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? "Show less" : "Read more"}
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -395,6 +381,7 @@ function ReviewedCovers({ uid, onViewMore }: { uid: string; onViewMore: () => vo
           .select(REVIEW_SELECT + ", is_draft")
           .eq("user_id", uid)
           .eq("is_draft", false)
+           .eq("is_hidden", false)
           .order("updated_at", { ascending: false })
           .limit(8)
       ).data as unknown as ReviewCardData[],
@@ -412,13 +399,13 @@ function ReviewedCovers({ uid, onViewMore }: { uid: string; onViewMore: () => vo
           </Link>
         ))}
       </div>
-      <button
+      <Button variant="ghost"
         type="button"
         onClick={onViewMore}
         className="mt-5 block w-full text-center text-sm font-medium text-primary hover:underline"
       >
         View more
-      </button>
+      </Button>
     </div>
   );
 }
@@ -433,6 +420,7 @@ function UserReviews({ uid }: { uid: string }) {
           .from("reviews")
           .select(REVIEW_SELECT + ", is_draft")
           .eq("user_id", uid)
+          .eq("is_hidden", false)
           .order("updated_at", { ascending: false })
           .limit(100)
       ).data as unknown as (ReviewCardData & { is_draft: boolean })[],
@@ -481,13 +469,22 @@ function UserThoughts({ uid }: { uid: string }) {
       </div>
     );
   }
-  return (
-    <div>
-      <ThoughtCard key={thoughts[active].id} t={thoughts[active]} />
-    </div>
-  );
+  const current = thoughts[active % thoughts.length];
+  return current ? <ThoughtCard key={current.id} t={current} /> : null;
 }
 type ShelfBook = { id: string; slug: string; title: string; cover_url: string | null };
+function ProfileList({ uid, kind }: { uid: string; kind: "favourite" | "recommendation" | "trail" }) {
+  const q = useQuery({ queryKey: kind === "trail" ? ["trail", uid] : ["profile-list", uid, kind], queryFn: async () => {
+    const result = kind === "trail"
+      ? await supabase.from("book_views").select("books(id, slug, title, cover_url)").eq("user_id", uid).order("viewed_at", { ascending: false }).limit(30)
+      : await supabase.from("book_lists").select("books(id, slug, title, cover_url)").eq("user_id", uid).eq("kind", kind).order("created_at", { ascending: false }).limit(200);
+    if (result.error) throw result.error;
+    return (result.data ?? []).map((row) => row.books).filter((book): book is ShelfBook => Boolean(book));
+  }});
+  if (q.isError) return <p className="mt-3 text-sm text-muted-foreground">Unable to load books.</p>;
+  if (q.isSuccess && !q.data.length) return <EmptyState title={kind === "trail" ? "No recently viewed books" : "This shelf is empty"} />;
+  return <div className="mt-4 flex gap-3 overflow-x-auto pb-2">{(q.data ?? []).map((book) => <Link key={book.id} to="/books/$slug" params={{ slug: book.slug }} className="w-28 shrink-0 sm:w-32"><BookCover src={book.cover_url} title={book.title} /><p className="mt-1.5 line-clamp-2 text-xs">{book.title}</p></Link>)}</div>;
+}
 type FollowingProfile = {
   id: string;
   username: string;
