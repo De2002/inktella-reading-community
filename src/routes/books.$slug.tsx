@@ -8,7 +8,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Flag, PenLine, Trash2 } from "lucide-react";
+import { PenLine, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
@@ -363,20 +363,21 @@ function MobileBookHeader({
       <BookCover src={book.cover_url} title={book.title} className="w-32 shrink-0" />
       <div className="min-w-0 pt-1">
         <h1 className="text-2xl leading-tight">{book.title}</h1>
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
-          <span className="rounded bg-pink-500 px-2 py-1 text-white">{book.category}</span>
-          <span className="text-muted-foreground">By:</span>
-          {authors.map((a) => (
-            <Link
-              key={a.id}
-              to="/authors/$id"
-              params={{ id: a.id }}
-              className="text-muted-foreground"
-            >
-              {a.name}
-            </Link>
-          ))}
-          <Flag className="ml-auto size-5 text-muted-foreground" />
+        <div className="mt-4 flex flex-col items-start gap-2 text-sm">
+          <span className="rounded bg-foreground px-2 py-1 text-background">{book.category}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground">By:</span>
+            {authors.map((a) => (
+              <Link
+                key={a.id}
+                to="/authors/$id"
+                params={{ id: a.id }}
+                className="text-muted-foreground"
+              >
+                {a.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -389,17 +390,20 @@ function MobileSynopsis({ synopsis }: { synopsis?: string | null }) {
 
   return (
     <section className="relative mt-7 pt-7">
-      <div
+      <svg
         aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-3 overflow-hidden"
-        style={{
-          backgroundImage:
-            "radial-gradient(70% 100% at 50% 100%, transparent 62%, hsl(var(--border)) 64%, hsl(var(--border)) 70%, transparent 72%)",
-          backgroundPosition: "center top",
-          backgroundSize: "28px 12px",
-          backgroundRepeat: "repeat-x",
-        }}
-      />
+        className="absolute inset-x-0 top-0 h-4 w-full text-border"
+        preserveAspectRatio="none"
+        viewBox="0 0 120 8"
+      >
+        <path
+          d="M0 4 C10 0 20 0 30 4 S50 8 60 4 S80 0 90 4 S110 8 120 4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
       <h2 className="text-lg font-medium">Synopsis</h2>
       {text ? (
         <>
@@ -486,7 +490,7 @@ function MobileBottomBar({ bookId, slug }: { bookId: string; slug: string }) {
                 </div>
               </DrawerContent>
             </Drawer>
-            <Button asChild className="bg-pink-600 hover:bg-pink-700">
+            <Button asChild className="bg-foreground text-background hover:bg-foreground/90">
               <Link to="/write" search={{ book: slug }}>
                 <PenLine data-icon="inline-start" />
                 Write a Review
