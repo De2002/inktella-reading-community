@@ -1,0 +1,24 @@
+ALTER TABLE public.profiles ADD COLUMN reviewer_rates text NOT NULL DEFAULT '', ADD COLUMN publication_details text NOT NULL DEFAULT '', ADD COLUMN contact_url text, ADD COLUMN coffee_url text, ADD COLUMN paypal_url text;
+ALTER TABLE public.authors ADD COLUMN alternate_names text[] NOT NULL DEFAULT '{}', ADD COLUMN photo_url text, ADD COLUMN birth_date text, ADD COLUMN death_date text;
+CREATE TABLE public.book_lists (user_id uuid NOT NULL, book_id uuid NOT NULL REFERENCES public.books(id) ON DELETE CASCADE, kind text NOT NULL CHECK (kind IN ('favourite','recommendation')), created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(user_id,book_id,kind));
+GRANT SELECT ON public.book_lists TO anon;
+GRANT SELECT, INSERT, DELETE ON public.book_lists TO authenticated;
+GRANT ALL ON public.book_lists TO service_role;
+ALTER TABLE public.book_lists ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Lists public read" ON public.book_lists FOR SELECT USING (true);
+CREATE POLICY "Members save own lists" ON public.book_lists FOR INSERT TO authenticated WITH CHECK (user_id=auth.uid() AND public.is_active_member(auth.uid()));
+CREATE POLICY "Members remove own lists" ON public.book_lists FOR DELETE TO authenticated USING (user_id=auth.uid());
+CREATE TABLE public.book_views (user_id uuid NOT NULL, book_id uuid NOT NULL REFERENCES public.books(id) ON DELETE CASCADE, viewed_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(user_id,book_id));
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.book_views TO authenticated;
+GRANT ALL ON public.book_views TO service_role;
+ALTER TABLE public.book_views ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Own view history" ON public.book_views FOR ALL TO authenticated USING (user_id=auth.uid()) WITH CHECK (user_id=auth.uid() AND public.is_active_member(auth.uid()));
+CREATE OR REPLACE FUNCTION public.validate_profile_contact_links() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN
+IF length(NEW.reviewer_rates)>2000 OR length(NEW.publication_details)>2000 THEN RAISE EXCEPTION 'Reviewer details are too long'; END IF;
+IF EXISTS (SELECT 1 FROM unnest(ARRAY[NEW.contact_url,NEW.coffee_url,NEW.paypal_url]) u WHERE u IS NOT NULL AND (length(u)>2000 OR u !~ '^https?://[^[:space:]]+$')) THEN RAISE EXCEPTION 'Please use a valid http or https link'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER validate_profile_contact_links BEFORE INSERT OR UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.validate_profile_contact_links();
+GRANT UPDATE (alternate_names,photo_url,birth_date,death_date,bio,website) ON public.authors TO authenticated;
+CREATE POLICY "Admins update author details" ON public.authors FOR UPDATE TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE OR REPLACE FUNCTION public.get_profile_stats(_user_id uuid) RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public AS $$ SELECT jsonb_build_object('reviews',(SELECT count(*) FROM public.reviews WHERE user_id=_user_id AND NOT is_draft AND NOT is_hidden),'thoughts',(SELECT count(*) FROM public.short_thoughts WHERE user_id=_user_id AND NOT is_hidden),'read',(SELECT count(*) FROM public.reading_statuses WHERE user_id=_user_id AND status='read'),'reading',(SELECT count(*) FROM public.reading_statuses WHERE user_id=_user_id AND status='reading'),'want',(SELECT count(*) FROM public.reading_statuses WHERE user_id=_user_id AND status='want'),'followers',(SELECT count(*) FROM public.follows WHERE following_id=_user_id),'following',(SELECT count(*) FROM public.follows WHERE follower_id=_user_id),'likes',(SELECT coalesce(sum(like_count),0) FROM public.reviews WHERE user_id=_user_id AND NOT is_draft AND NOT is_hidden)) $$;
+REVOKE ALL ON FUNCTION public.get_profile_stats(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_profile_stats(uuid) TO anon,authenticated;
