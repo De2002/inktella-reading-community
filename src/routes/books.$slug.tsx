@@ -8,17 +8,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import {
-  BookMarked,
-  BookOpen,
-  Check,
-  Flag,
-  Globe2,
-  Menu,
-  PenLine,
-  Star,
-  Trash2,
-} from "lucide-react";
+import { Flag, PenLine, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
@@ -176,6 +166,7 @@ function BookPage() {
       )}
       <div className="md:hidden">
         <MobileBookHeader book={book} authors={authors} />
+        <MobileSynopsis synopsis={book.synopsis} />
         <div className="mt-8">
           <Recometer bookId={book.id} mobile />
         </div>
@@ -372,14 +363,6 @@ function MobileBookHeader({
       <BookCover src={book.cover_url} title={book.title} className="w-32 shrink-0" />
       <div className="min-w-0 pt-1">
         <h1 className="text-2xl leading-tight">{book.title}</h1>
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <Globe2 className="size-4" />
-          {book.language ?? "English"}
-          <span>·</span>
-          <span>▣ 18+</span>
-          <span>·</span>
-          <span>{book.status === "published" ? "Ongoing" : "Pending"}</span>
-        </p>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
           <span className="rounded bg-pink-500 px-2 py-1 text-white">{book.category}</span>
           <span className="text-muted-foreground">By:</span>
@@ -397,6 +380,51 @@ function MobileBookHeader({
         </div>
       </div>
     </div>
+  );
+}
+
+function MobileSynopsis({ synopsis }: { synopsis?: string | null }) {
+  const [expanded, setExpanded] = useState(false);
+  const text = synopsis?.trim();
+
+  return (
+    <section className="relative mt-7 pt-7">
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-3 overflow-hidden"
+        style={{
+          backgroundImage:
+            "radial-gradient(70% 100% at 50% 100%, transparent 62%, hsl(var(--border)) 64%, hsl(var(--border)) 70%, transparent 72%)",
+          backgroundPosition: "center top",
+          backgroundSize: "28px 12px",
+          backgroundRepeat: "repeat-x",
+        }}
+      />
+      <h2 className="text-lg font-medium">Synopsis</h2>
+      {text ? (
+        <>
+          <p
+            className={cn(
+              "mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground",
+              !expanded && "line-clamp-5",
+            )}
+          >
+            {text}
+          </p>
+          {text.length > 360 && (
+            <button
+              type="button"
+              className="mt-2 text-sm font-medium text-primary"
+              onClick={() => setExpanded((value) => !value)}
+            >
+              {expanded ? "Read less" : "Read more"}
+            </button>
+          )}
+        </>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">No synopsis yet.</p>
+      )}
+    </section>
   );
 }
 
