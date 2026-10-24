@@ -6,7 +6,14 @@ import { useAuth } from "@/lib/auth";
 import { LOW_VOTE_THRESHOLD } from "@/lib/rules";
 import { cn } from "@/lib/utils";
 
-const SEG = ["bg-seg-1", "bg-seg-2", "bg-seg-3", "bg-primary", "bg-muted-foreground"];
+const SEG = [
+  { bar: "bg-orange-500", text: "text-foreground" },
+  { bar: "bg-rose-500", text: "text-white" },
+  { bar: "bg-purple-900", text: "text-white" },
+  { bar: "bg-sky-900", text: "text-white" },
+  { bar: "bg-cyan-700", text: "text-white" },
+  { bar: "bg-cyan-200", text: "text-foreground" },
+];
 
 export function ReaderConsensus({ bookId, category }: { bookId: string; category: string }) {
   const { userId } = useAuth();
@@ -36,15 +43,25 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
     queryKey: ["consensus-mine", bookId, userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("consensus_votes").select("question_id, answer").eq("book_id", bookId).eq("user_id", userId!);
-      return Object.fromEntries((data ?? []).map((d) => [d.question_id, d.answer])) as Record<string, string>;
+      const { data } = await supabase
+        .from("consensus_votes")
+        .select("question_id, answer")
+        .eq("book_id", bookId)
+        .eq("user_id", userId!);
+      return Object.fromEntries((data ?? []).map((d) => [d.question_id, d.answer])) as Record<
+        string,
+        string
+      >;
     },
   });
 
   const answer = useMutation({
     mutationFn: async ({ qid, value }: { qid: string; value: string }) => {
       if (mine.data?.[qid] === value) {
-        const { error } = await supabase.from("consensus_votes").delete().match({ book_id: bookId, user_id: userId!, question_id: qid });
+        const { error } = await supabase
+          .from("consensus_votes")
+          .delete()
+          .match({ book_id: bookId, user_id: userId!, question_id: qid });
         if (error) throw error;
       } else {
         const { error } = await supabase
@@ -61,47 +78,64 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
   });
 
   return (
-    <section className="rounded-lg border bg-card p-5">
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-lg">Reader Consensus</h3>
+    <section className="w-full bg-transparent py-2">
+      <div className="flex items-center justify-between gap-4">
+        <h3 className="text-xl font-semibold">Reader Consensus</h3>
         {userId && (
-          <button onClick={() => setEditing((e) => !e)} className="text-sm text-primary underline-offset-4 hover:underline">
-            {editing ? "Done" : Object.keys(mine.data ?? {}).length ? "Edit my answers" : "Add my answers"}
+          <button
+            type="button"
+            onClick={() => setEditing((e) => !e)}
+            className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+          >
+            {editing ? "Done" : Object.keys(mine.data ?? {}).length ? "Edit" : "Add yours"}
           </button>
         )}
       </div>
-      <div className="mt-4 space-y-5">
+      <div className="mt-8 flex flex-col gap-12">
         {(questions.data ?? []).map((q) => {
           const rows = (results.data ?? []).filter((r) => r.question_id === q.id);
           const total = rows.reduce((s, r) => s + r.votes, 0);
           return (
-            <div key={q.id}>
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="text-sm font-medium">{q.prompt}</p>
-                <span className="text-xs text-muted-foreground">{total} {total === 1 ? "vote" : "votes"}</span>
-              </div>
+            <div key={q.id} className="text-center">
+              <p className="text-2xl font-semibold leading-tight tracking-tight">{q.prompt}</p>
               {total > 0 ? (
                 <>
-                  <div className="mt-2 flex h-2.5 overflow-hidden rounded-full bg-muted">
+                  <div className="mx-auto mt-5 flex h-14 w-full max-w-2xl overflow-hidden rounded-full bg-muted font-semibold sm:h-16">
                     {q.options.map((o, i) => {
                       const v = rows.find((r) => r.answer === o)?.votes ?? 0;
-                      return <div key={o} className={SEG[i % SEG.length]} style={{ width: `${(v / total) * 100}%` }} />;
+                      const percentage = Math.round((v / total) * 100);
+                      return percentage > 0 ? (
+                        <div
+                          key={o}
+                          className={cn(
+                            "flex min-w-0 items-center justify-center border-r-4 border-background px-1 text-base last:border-r-0 sm:text-xl",
+                            SEG[i % SEG.length].bar,
+                            SEG[i % SEG.length].text,
+                          )}
+                          style={{ width: `${percentage}%` }}
+                          title={`${o}: ${percentage}%`}
+                        >
+                          <span className="truncate">{percentage}%</span>
+                        </div>
+                      ) : null;
                     })}
                   </div>
-                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <div className="mx-auto mt-5 flex max-w-2xl flex-wrap justify-center gap-x-7 gap-y-3 text-base text-muted-foreground sm:text-lg">
                     {q.options.map((o, i) => {
                       const v = rows.find((r) => r.answer === o)?.votes ?? 0;
                       return (
-                        <span key={o} className="flex items-center gap-1">
-                          <span className={cn("h-2 w-2 rounded-full", SEG[i % SEG.length])} />
-                          {o} {Math.round((v / total) * 100)}%
+                        <span key={o} className="flex items-center gap-2">
+                          <span
+                            className={cn("size-3 rounded-full sm:size-4", SEG[i % SEG.length].bar)}
+                          />
+                          {o}
                         </span>
                       );
                     })}
                   </div>
                 </>
               ) : (
-                <p className="mt-1 text-xs text-muted-foreground">No answers yet.</p>
+                <p className="mt-5 text-sm text-muted-foreground">No answers yet.</p>
               )}
               {editing && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -111,7 +145,9 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
                       onClick={() => answer.mutate({ qid: q.id, value: o })}
                       className={cn(
                         "rounded-full border px-3 py-1 text-xs transition-colors",
-                        mine.data?.[q.id] === o ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
+                        mine.data?.[q.id] === o
+                          ? "border-foreground bg-foreground text-background"
+                          : "hover:bg-muted",
                       )}
                     >
                       {o}
@@ -123,9 +159,12 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
           );
         })}
       </div>
-      {(results.data ?? []).length > 0 && (results.data ?? []).reduce((s, r) => s + r.votes, 0) < LOW_VOTE_THRESHOLD && (
-        <p className="mt-4 text-xs text-muted-foreground">Based on a small number of readers so far.</p>
-      )}
+      {(results.data ?? []).length > 0 &&
+        (results.data ?? []).reduce((s, r) => s + r.votes, 0) < LOW_VOTE_THRESHOLD && (
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            Based on a small number of readers so far.
+          </p>
+        )}
     </section>
   );
 }
