@@ -17,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/submit")({
       { name: "description", content: "Add a missing book to the Inktella catalogue." },
       { property: "og:title", content: "Submit a book — Inktella" },
       { property: "og:description", content: "Add a missing book to the catalogue." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Submit,

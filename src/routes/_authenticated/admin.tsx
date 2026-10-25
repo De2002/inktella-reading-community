@@ -18,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
       { name: "description", content: "Moderation and catalogue tools." },
       { property: "og:title", content: "Admin — Inktella" },
       { property: "og:description", content: "Moderation and catalogue tools." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

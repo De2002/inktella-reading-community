@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookCover } from "@/components/BookCover";
 import { EmptyState, ReviewCard, type ReviewCardData } from "@/components/ContentCards";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,9 @@ import { recometerPercents } from "@/lib/rules";
 import { getAuthorCatalogueDetails } from "@/lib/authors.functions";
 import { authorAge } from "@/lib/author-dates";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/authors/$id")({
   head: () => ({
@@ -25,6 +28,8 @@ export const Route = createFileRoute("/authors/$id")({
 
 function AuthorPage() {
   const { id } = Route.useParams();
+  const { isAdmin } = useAuth();
+  const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["author", id],
     queryFn: async () => {
@@ -49,6 +54,17 @@ function AuthorPage() {
   });
   const authorRecord = q.data?.author;
   const details = useQuery({ queryKey: ["author-catalogue", authorRecord?.openlibrary_key, authorRecord?.name], enabled: !!authorRecord, staleTime: 86400000, queryFn: () => authorRecord ? getAuthorCatalogueDetails({ data: { key: authorRecord.openlibrary_key, name: authorRecord.name } }) : null });
+  const saveDetails = useMutation({ mutationFn: async () => {
+    if (!details.data || !authorRecord) return;
+    const { error } = await supabase.from("authors").update({
+      bio: authorRecord.bio || details.data.bio,
+      alternate_names: authorRecord.alternate_names.length ? authorRecord.alternate_names : details.data.alternate_names,
+      photo_url: authorRecord.photo_url || details.data.photo_url,
+      birth_date: authorRecord.birth_date || details.data.birth_date,
+      death_date: authorRecord.death_date || details.data.death_date,
+    }).eq("id", id);
+    if (error) throw error;
+  }, onSuccess: () => { toast.success("Author details saved"); void qc.invalidateQueries({ queryKey: ["author", id] }); }, onError: (error: Error) => toast.error(error.message) });
   const [today, setToday] = useState<Date | null>(null);
   useEffect(() => {
     setToday(new Date());
@@ -79,6 +95,7 @@ function AuthorPage() {
         </div>
       </div>
       {bio && <p className="mt-6 max-w-3xl whitespace-pre-line font-reading text-lg leading-relaxed">{bio}</p>}
+      {isAdmin && details.data && <Button variant="outline" className="mt-4" onClick={() => saveDetails.mutate()} disabled={saveDetails.isPending}>Save catalogue details</Button>}
       {author.website && <a href={author.website} className="mt-2 inline-block text-sm text-primary" target="_blank" rel="noopener noreferrer">Official website</a>}
       <p className="mt-4 text-sm text-muted-foreground">
         {tally.total > 0 ? <>Overall Recometer: <b className="text-foreground">{pct.recommend}%</b> would recommend · {tally.total} votes</> : "No Recometer votes yet."}

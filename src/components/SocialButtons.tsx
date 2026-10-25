@@ -31,6 +31,8 @@ export function FollowButton({ profileId }: { profileId: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["follow"] });
       qc.invalidateQueries({ queryKey: ["follow-counts", profileId] });
+      qc.invalidateQueries({ queryKey: ["profile-stats"] });
+      qc.invalidateQueries({ queryKey: ["following-list"] });
       qc.invalidateQueries({ queryKey: ["feed"] });
     },
     onError: (e: Error) => toast.error(e.message),

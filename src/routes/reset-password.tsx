@@ -12,6 +12,8 @@ export const Route = createFileRoute("/reset-password")({
       { name: "description", content: "Set a new password for your Inktella account." },
       { property: "og:title", content: "Reset password — Inktella" },
       { property: "og:description", content: "Set a new password for your Inktella account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Reset,

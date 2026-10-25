@@ -14,6 +14,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Join Inktella to write reviews, keep shelves and follow readers." },
       { property: "og:title", content: "Sign in — Inktella" },
       { property: "og:description", content: "Join a community of readers and reviewers." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,

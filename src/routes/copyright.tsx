@@ -14,6 +14,8 @@ export const Route = createFileRoute("/copyright")({
       { name: "description", content: "Request removal of a cover image or report a copyright concern on Inktella." },
       { property: "og:title", content: "Copyright & cover removal — Inktella" },
       { property: "og:description", content: "How to raise a copyright concern or cover-image removal request." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Copyright,
