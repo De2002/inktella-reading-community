@@ -57,11 +57,11 @@ function AuthorPage() {
     const d = details.data;
     const args = {
       _author_id: id,
-      _bio: !authorRecord.bio && d.bio ? d.bio : null,
-      _alternate_names: !authorRecord.alternate_names.length && d.alternate_names.length ? d.alternate_names : null,
-      _photo_url: !authorRecord.photo_url && d.photo_url ? d.photo_url : null,
-      _birth_date: !authorRecord.birth_date && d.birth_date ? d.birth_date : null,
-      _death_date: !authorRecord.death_date && d.death_date ? d.death_date : null,
+      _bio: !authorRecord.bio && d.bio ? d.bio : undefined,
+      _alternate_names: !authorRecord.alternate_names.length && d.alternate_names.length ? d.alternate_names : undefined,
+      _photo_url: !authorRecord.photo_url && d.photo_url ? d.photo_url : undefined,
+      _birth_date: !authorRecord.birth_date && d.birth_date ? d.birth_date : undefined,
+      _death_date: !authorRecord.death_date && d.death_date ? d.death_date : undefined,
     };
     if (!args._bio && !args._alternate_names && !args._photo_url && !args._birth_date && !args._death_date) return;
     autoSaved.current = true;
