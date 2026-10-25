@@ -79,8 +79,7 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
 
   return (
     <section className="w-full bg-transparent py-2">
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="text-xl font-semibold">Reader Consensus</h3>
+      <div className="flex justify-end">
         {userId && (
           <button
             type="button"
@@ -91,16 +90,18 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
           </button>
         )}
       </div>
-      <div className="mt-8 flex flex-col gap-12">
+      <div className="mt-4 flex flex-col gap-8">
         {(questions.data ?? []).map((q) => {
           const rows = (results.data ?? []).filter((r) => r.question_id === q.id);
           const total = rows.reduce((s, r) => s + r.votes, 0);
           return (
             <div key={q.id} className="text-center">
-              <p className="text-2xl font-semibold leading-tight tracking-tight">{q.prompt}</p>
+              <p className="text-lg font-semibold leading-tight tracking-tight sm:text-xl">
+                {q.prompt}
+              </p>
               {total > 0 ? (
                 <>
-                  <div className="mx-auto mt-5 flex h-14 w-full max-w-2xl overflow-hidden rounded-full bg-muted font-semibold sm:h-16">
+                  <div className="mx-auto mt-3 flex h-10 w-full max-w-2xl overflow-hidden rounded-full bg-muted font-semibold sm:h-12">
                     {q.options.map((o, i) => {
                       const v = rows.find((r) => r.answer === o)?.votes ?? 0;
                       const percentage = Math.round((v / total) * 100);
