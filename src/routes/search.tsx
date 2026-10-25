@@ -21,6 +21,8 @@ export const Route = createFileRoute("/search")({
       { name: "description", content: "Search Inktella for books, authors, reviewers and review articles." },
       { property: "og:title", content: "Search — Inktella" },
       { property: "og:description", content: "Find books, authors, reviewers and reviews." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SearchPage,

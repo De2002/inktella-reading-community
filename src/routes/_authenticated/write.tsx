@@ -26,6 +26,8 @@ export const Route = createFileRoute("/_authenticated/write")({
       { name: "description", content: "Write and publish a book review on Inktella." },
       { property: "og:title", content: "Write a review — Inktella" },
       { property: "og:description", content: "Write and publish a book review." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: WritePage,
