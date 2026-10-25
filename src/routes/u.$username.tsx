@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import {
   EmptyState,
   ReviewCard,

@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

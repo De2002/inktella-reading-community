@@ -5,6 +5,7 @@ import { AlertTriangle, BadgeCheck, ExternalLink, Heart, Pencil, Share2, Star, T
 import { useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import { SafeHtml } from "@/components/SafeHtml";
 import { FollowButton, ReportButton } from "@/components/SocialButtons";
 import { Spoiler } from "@/components/Spoiler";
