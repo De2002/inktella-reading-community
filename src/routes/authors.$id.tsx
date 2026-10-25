@@ -1,16 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import { EmptyState, ReviewCard, type ReviewCardData } from "@/components/ContentCards";
 import { supabase } from "@/integrations/supabase/client";
 import { REVIEW_SELECT } from "@/lib/queries";
 import { recometerPercents } from "@/lib/rules";
 import { getAuthorCatalogueDetails } from "@/lib/authors.functions";
 import { authorAge } from "@/lib/author-dates";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/authors/$id")({
   head: () => ({
