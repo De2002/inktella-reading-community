@@ -1,16 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import { EmptyState, ReviewCard, type ReviewCardData } from "@/components/ContentCards";
 import { supabase } from "@/integrations/supabase/client";
 import { REVIEW_SELECT } from "@/lib/queries";
 import { recometerPercents } from "@/lib/rules";
 import { getAuthorCatalogueDetails } from "@/lib/authors.functions";
 import { authorAge } from "@/lib/author-dates";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/authors/$id")({
   head: () => ({
@@ -28,7 +26,6 @@ export const Route = createFileRoute("/authors/$id")({
 
 function AuthorPage() {
   const { id } = Route.useParams();
-  const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["author", id],
@@ -54,24 +51,31 @@ function AuthorPage() {
   });
   const authorRecord = q.data?.author;
   const details = useQuery({ queryKey: ["author-catalogue", authorRecord?.openlibrary_key, authorRecord?.name], enabled: !!authorRecord, staleTime: 86400000, queryFn: () => authorRecord ? getAuthorCatalogueDetails({ data: { key: authorRecord.openlibrary_key, name: authorRecord.name } }) : null });
-  const saveDetails = useMutation({ mutationFn: async () => {
-    if (!details.data || !authorRecord) return;
-    const { error } = await supabase.from("authors").update({
-      bio: authorRecord.bio || details.data.bio,
-      alternate_names: authorRecord.alternate_names.length ? authorRecord.alternate_names : details.data.alternate_names,
-      photo_url: authorRecord.photo_url || details.data.photo_url,
-      birth_date: authorRecord.birth_date || details.data.birth_date,
-      death_date: authorRecord.death_date || details.data.death_date,
-    }).eq("id", id);
-    if (error) throw error;
-  }, onSuccess: () => { toast.success("Author details saved"); void qc.invalidateQueries({ queryKey: ["author", id] }); }, onError: (error: Error) => toast.error(error.message) });
+  const autoSaved = useRef(false);
+  useEffect(() => {
+    if (autoSaved.current || !authorRecord || !details.data) return;
+    const d = details.data;
+    const args = {
+      _author_id: id,
+      ...(!authorRecord.bio && d.bio ? { _bio: d.bio } : {}),
+      ...(!authorRecord.alternate_names.length && d.alternate_names.length ? { _alternate_names: d.alternate_names } : {}),
+      ...(!authorRecord.photo_url && d.photo_url ? { _photo_url: d.photo_url } : {}),
+      ...(!authorRecord.birth_date && d.birth_date ? { _birth_date: d.birth_date } : {}),
+      ...(!authorRecord.death_date && d.death_date ? { _death_date: d.death_date } : {}),
+    };
+    if (!args._bio && !args._alternate_names && !args._photo_url && !args._birth_date && !args._death_date) return;
+    autoSaved.current = true;
+    void supabase.rpc("save_author_details", args).then(({ error }) => {
+      if (!error) void qc.invalidateQueries({ queryKey: ["author", id] });
+    });
+  }, [authorRecord, details.data, id, qc]);
   const [today, setToday] = useState<Date | null>(null);
   useEffect(() => {
     setToday(new Date());
     const timer = window.setInterval(() => setToday(new Date()), 60000);
     return () => window.clearInterval(timer);
   }, []);
-  if (q.isLoading) return <div className="mx-auto max-w-4xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (q.isLoading) return <PageLoader />;
   if (!q.data) return <div className="mx-auto max-w-4xl px-4 py-16 text-center"><h1 className="text-3xl">Author not found</h1></div>;
   const { author, books, tally, reviews } = q.data;
   const pct = recometerPercents(tally);
@@ -95,7 +99,6 @@ function AuthorPage() {
         </div>
       </div>
       {bio && <p className="mt-6 max-w-3xl whitespace-pre-line font-reading text-lg leading-relaxed">{bio}</p>}
-      {isAdmin && details.data && <Button variant="outline" className="mt-4" onClick={() => saveDetails.mutate()} disabled={saveDetails.isPending}>Save catalogue details</Button>}
       {author.website && <a href={author.website} className="mt-2 inline-block text-sm text-primary" target="_blank" rel="noopener noreferrer">Official website</a>}
       <p className="mt-4 text-sm text-muted-foreground">
         {tally.total > 0 ? <>Overall Recometer: <b className="text-foreground">{pct.recommend}%</b> would recommend · {tally.total} votes</> : "No Recometer votes yet."}

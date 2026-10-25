@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ThemeToggle } from "@/lib/theme";
+import { Logo } from "./Logo";
 import { UserAvatar } from "./UserAvatar";
 
 export function SiteHeader() {
@@ -49,7 +50,8 @@ export function SiteHeader() {
       className={`sticky top-0 z-40 border-b bg-background/90 backdrop-blur transition-transform duration-200 ${headerVisible ? "translate-y-0" : "-translate-y-full"}`}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
-        <Link to="/" className="font-display text-xl font-semibold tracking-tight">
+        <Link to="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
+          <Logo className="h-7 w-7" />
           Inktella
         </Link>
         <form

@@ -5,6 +5,7 @@ import { AlertTriangle, BadgeCheck, ExternalLink, Heart, Pencil, Share2, Star, T
 import { useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import { SafeHtml } from "@/components/SafeHtml";
 import { FollowButton, ReportButton } from "@/components/SocialButtons";
 import { Spoiler } from "@/components/Spoiler";
@@ -79,7 +80,7 @@ function ReviewPage() {
     },
   });
 
-  if (q.isLoading) return <div className="mx-auto max-w-2xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (q.isLoading) return <PageLoader />;
   const r = q.data;
   if (!r) return <div className="mx-auto max-w-2xl px-4 py-16 text-center"><h1 className="text-3xl">Review not found</h1></div>;
   const mine = r.user_id === userId;

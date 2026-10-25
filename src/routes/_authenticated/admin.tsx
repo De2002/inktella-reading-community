@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +32,7 @@ type Tab = "pending" | "reports" | "books" | "reviews" | "members";
 function Admin() {
   const { isAdmin, profile } = useAuth();
   const [tab, setTab] = useState<Tab>("pending");
-  if (!profile) return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (!profile) return <PageLoader />;
   if (!isAdmin) return <div className="mx-auto max-w-5xl px-4 py-16">You don't have access to this page.</div>;
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">

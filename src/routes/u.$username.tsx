@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BookCover } from "@/components/BookCover";
+import { PageLoader } from "@/components/Logo";
 import {
   EmptyState,
   ReviewCard,
@@ -106,8 +107,7 @@ function Profile() {
       return data as Record<string, number>;
     },
   });
-  if (p.isLoading)
-    return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (p.isLoading) return <PageLoader />;
   if (!p.data)
     return (
       <div className="mx-auto max-w-5xl px-4 py-16 text-center">

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageLoader } from "@/components/Logo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +51,7 @@ function Settings() {
         paypal_url: profile.paypal_url ?? "",
       });
   }, [profile]);
-  if (!profile) return <div className="mx-auto max-w-xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (!profile) return <PageLoader />;
   const set = (k: keyof typeof f) => (e: any) => setF({ ...f, [k]: e.target.value });
 
   const save = async () => {

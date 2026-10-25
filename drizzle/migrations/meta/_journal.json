@@ -36,6 +36,13 @@
       "when": 1792861306257,
       "tag": "0004_connect_profiles_author_details",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792904414580,
+      "tag": "0005_save_author_details_rpc",
+      "breakpoints": true
     }
   ]
 }
