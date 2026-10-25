@@ -63,7 +63,14 @@ function AuthorPage() {
     if (!authorRecord.death_date && d.death_date) updates.death_date = d.death_date;
     if (Object.keys(updates).length === 0) return;
     autoSaved.current = true;
-    void supabase.from("authors").update(updates).eq("id", id).then(({ error }) => {
+    void supabase.rpc("save_author_details", {
+      _author_id: id,
+      _bio: (updates.bio as string) ?? null,
+      _alternate_names: (updates.alternate_names as string[]) ?? null,
+      _photo_url: (updates.photo_url as string) ?? null,
+      _birth_date: (updates.birth_date as string) ?? null,
+      _death_date: (updates.death_date as string) ?? null,
+    }).then(({ error }) => {
       if (!error) void qc.invalidateQueries({ queryKey: ["author", id] });
     });
   }, [authorRecord, details.data, id, qc]);
@@ -73,7 +80,7 @@ function AuthorPage() {
     const timer = window.setInterval(() => setToday(new Date()), 60000);
     return () => window.clearInterval(timer);
   }, []);
-  if (q.isLoading) return <div className="mx-auto max-w-4xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (q.isLoading) return <PageLoader />;
   if (!q.data) return <div className="mx-auto max-w-4xl px-4 py-16 text-center"><h1 className="text-3xl">Author not found</h1></div>;
   const { author, books, tally, reviews } = q.data;
   const pct = recometerPercents(tally);
@@ -97,7 +104,6 @@ function AuthorPage() {
         </div>
       </div>
       {bio && <p className="mt-6 max-w-3xl whitespace-pre-line font-reading text-lg leading-relaxed">{bio}</p>}
-      {isAdmin && details.data && <Button variant="outline" className="mt-4" onClick={() => saveDetails.mutate()} disabled={saveDetails.isPending}>Save catalogue details</Button>}
       {author.website && <a href={author.website} className="mt-2 inline-block text-sm text-primary" target="_blank" rel="noopener noreferrer">Official website</a>}
       <p className="mt-4 text-sm text-muted-foreground">
         {tally.total > 0 ? <>Overall Recometer: <b className="text-foreground">{pct.recommend}%</b> would recommend · {tally.total} votes</> : "No Recometer votes yet."}
