@@ -742,6 +742,17 @@ export type Database = {
         Args: { _author: string; _title: string }
         Returns: string
       }
+      save_author_details: {
+        Args: {
+          _alternate_names?: string[]
+          _author_id: string
+          _bio?: string
+          _birth_date?: string
+          _death_date?: string
+          _photo_url?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
