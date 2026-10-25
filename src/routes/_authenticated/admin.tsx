@@ -31,7 +31,7 @@ type Tab = "pending" | "reports" | "books" | "reviews" | "members";
 function Admin() {
   const { isAdmin, profile } = useAuth();
   const [tab, setTab] = useState<Tab>("pending");
-  if (!profile) return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (!profile) return <PageLoader />;
   if (!isAdmin) return <div className="mx-auto max-w-5xl px-4 py-16">You don't have access to this page.</div>;
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">

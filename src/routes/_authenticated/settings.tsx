@@ -50,7 +50,7 @@ function Settings() {
         paypal_url: profile.paypal_url ?? "",
       });
   }, [profile]);
-  if (!profile) return <div className="mx-auto max-w-xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (!profile) return <PageLoader />;
   const set = (k: keyof typeof f) => (e: any) => setF({ ...f, [k]: e.target.value });
 
   const save = async () => {

@@ -79,7 +79,7 @@ function ReviewPage() {
     },
   });
 
-  if (q.isLoading) return <div className="mx-auto max-w-2xl px-4 py-16 text-muted-foreground">Loading…</div>;
+  if (q.isLoading) return <PageLoader />;
   const r = q.data;
   if (!r) return <div className="mx-auto max-w-2xl px-4 py-16 text-center"><h1 className="text-3xl">Review not found</h1></div>;
   const mine = r.user_id === userId;
