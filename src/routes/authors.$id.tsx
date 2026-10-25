@@ -55,22 +55,17 @@ function AuthorPage() {
   useEffect(() => {
     if (autoSaved.current || !authorRecord || !details.data) return;
     const d = details.data;
-    const updates: Record<string, unknown> = {};
-    if (!authorRecord.bio && d.bio) updates.bio = d.bio;
-    if (!authorRecord.alternate_names.length && d.alternate_names.length) updates.alternate_names = d.alternate_names;
-    if (!authorRecord.photo_url && d.photo_url) updates.photo_url = d.photo_url;
-    if (!authorRecord.birth_date && d.birth_date) updates.birth_date = d.birth_date;
-    if (!authorRecord.death_date && d.death_date) updates.death_date = d.death_date;
-    if (Object.keys(updates).length === 0) return;
-    autoSaved.current = true;
-    void supabase.rpc("save_author_details", {
+    const args = {
       _author_id: id,
-      _bio: (updates.bio as string) ?? null,
-      _alternate_names: (updates.alternate_names as string[]) ?? null,
-      _photo_url: (updates.photo_url as string) ?? null,
-      _birth_date: (updates.birth_date as string) ?? null,
-      _death_date: (updates.death_date as string) ?? null,
-    }).then(({ error }) => {
+      _bio: !authorRecord.bio && d.bio ? d.bio : null,
+      _alternate_names: !authorRecord.alternate_names.length && d.alternate_names.length ? d.alternate_names : null,
+      _photo_url: !authorRecord.photo_url && d.photo_url ? d.photo_url : null,
+      _birth_date: !authorRecord.birth_date && d.birth_date ? d.birth_date : null,
+      _death_date: !authorRecord.death_date && d.death_date ? d.death_date : null,
+    };
+    if (!args._bio && !args._alternate_names && !args._photo_url && !args._birth_date && !args._death_date) return;
+    autoSaved.current = true;
+    void supabase.rpc("save_author_details", args).then(({ error }) => {
       if (!error) void qc.invalidateQueries({ queryKey: ["author", id] });
     });
   }, [authorRecord, details.data, id, qc]);
