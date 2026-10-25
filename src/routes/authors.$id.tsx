@@ -26,7 +26,6 @@ export const Route = createFileRoute("/authors/$id")({
 
 function AuthorPage() {
   const { id } = Route.useParams();
-  const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["author", id],
@@ -52,17 +51,22 @@ function AuthorPage() {
   });
   const authorRecord = q.data?.author;
   const details = useQuery({ queryKey: ["author-catalogue", authorRecord?.openlibrary_key, authorRecord?.name], enabled: !!authorRecord, staleTime: 86400000, queryFn: () => authorRecord ? getAuthorCatalogueDetails({ data: { key: authorRecord.openlibrary_key, name: authorRecord.name } }) : null });
-  const saveDetails = useMutation({ mutationFn: async () => {
-    if (!details.data || !authorRecord) return;
-    const { error } = await supabase.from("authors").update({
-      bio: authorRecord.bio || details.data.bio,
-      alternate_names: authorRecord.alternate_names.length ? authorRecord.alternate_names : details.data.alternate_names,
-      photo_url: authorRecord.photo_url || details.data.photo_url,
-      birth_date: authorRecord.birth_date || details.data.birth_date,
-      death_date: authorRecord.death_date || details.data.death_date,
-    }).eq("id", id);
-    if (error) throw error;
-  }, onSuccess: () => { toast.success("Author details saved"); void qc.invalidateQueries({ queryKey: ["author", id] }); }, onError: (error: Error) => toast.error(error.message) });
+  const autoSaved = useRef(false);
+  useEffect(() => {
+    if (autoSaved.current || !authorRecord || !details.data) return;
+    const d = details.data;
+    const updates: Record<string, unknown> = {};
+    if (!authorRecord.bio && d.bio) updates.bio = d.bio;
+    if (!authorRecord.alternate_names.length && d.alternate_names.length) updates.alternate_names = d.alternate_names;
+    if (!authorRecord.photo_url && d.photo_url) updates.photo_url = d.photo_url;
+    if (!authorRecord.birth_date && d.birth_date) updates.birth_date = d.birth_date;
+    if (!authorRecord.death_date && d.death_date) updates.death_date = d.death_date;
+    if (Object.keys(updates).length === 0) return;
+    autoSaved.current = true;
+    void supabase.from("authors").update(updates).eq("id", id).then(({ error }) => {
+      if (!error) void qc.invalidateQueries({ queryKey: ["author", id] });
+    });
+  }, [authorRecord, details.data, id, qc]);
   const [today, setToday] = useState<Date | null>(null);
   useEffect(() => {
     setToday(new Date());
