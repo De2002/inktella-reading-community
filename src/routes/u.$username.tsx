@@ -14,7 +14,7 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookCover } from "@/components/BookCover";
 import { PageLoader } from "@/components/Logo";
 import {
