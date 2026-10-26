@@ -110,8 +110,8 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
                           key={o}
                           className={cn(
                             "flex min-w-0 items-center justify-center border-r-4 border-background px-1 text-base last:border-r-0 sm:text-xl",
-                            SEG[i % SEG.length].bar,
-                            SEG[i % SEG.length].text,
+                            SEG[i % SEG.length]!.bar,
+                            SEG[i % SEG.length]!.text,
                           )}
                           style={{ width: `${percentage}%` }}
                           title={`${o}: ${percentage}%`}
@@ -127,7 +127,7 @@ export function ReaderConsensus({ bookId, category }: { bookId: string; category
                       return (
                         <span key={o} className="flex items-center gap-2">
                           <span
-                            className={cn("size-3 rounded-full sm:size-4", SEG[i % SEG.length].bar)}
+                            className={cn("size-3 rounded-full sm:size-4", SEG[i % SEG.length]!.bar)}
                           />
                           {o}
                         </span>
