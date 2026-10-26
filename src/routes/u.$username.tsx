@@ -63,15 +63,58 @@ export const Route = createFileRoute("/u/$username")({
 type DrawerKind = "hire" | "support" | "reviews" | null;
 
 const statDefinitions = [
-  ["Reviews", "reviews", BookOpen],
-  ["Thoughts", "thoughts", MessageCircle],
-  ["Books read", "read", BookOpen],
-  ["Reading now", "reading", Sparkles],
-  ["Want to read", "want", Star],
-  ["Followers", "followers", Users],
-  ["Following", "following", Users],
-  ["All likes", "likes", Heart],
+  ["Reviews", "reviews", BookOpen, "text-primary", "bg-primary/10"],
+  ["Thoughts", "thoughts", MessageCircle, "text-seg-2", "bg-seg-2/15"],
+  ["Books read", "read", BookOpen, "text-seg-1", "bg-seg-1/10"],
+  ["Reading now", "reading", Sparkles, "text-not-recommend", "bg-not-recommend/10"],
+  ["Want to read", "want", Star, "text-seg-3", "bg-seg-3/10"],
+  ["Followers", "followers", Users, "text-primary", "bg-primary/10"],
+  ["Following", "following", Users, "text-seg-1", "bg-seg-1/10"],
+  ["All likes", "likes", Heart, "text-not-recommend", "bg-not-recommend/10"],
 ] as const;
+
+function CountUp({ value }: { value: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const run = () => {
+      if (value <= 0) {
+        setShown(0);
+        return;
+      }
+      const start = performance.now();
+      const duration = 900;
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        setShown(Math.round(value * (1 - Math.pow(1 - t, 3))));
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+    if (typeof IntersectionObserver === "undefined") {
+      run();
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          run();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [value]);
+  return <span ref={ref}>{shown.toLocaleString()}</span>;
+}
 
 function WavyDivider() {
   return (
