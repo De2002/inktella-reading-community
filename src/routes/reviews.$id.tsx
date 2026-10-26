@@ -25,6 +25,7 @@ export const Route = createFileRoute("/reviews/$id")({
       { property: "og:title", content: "A review on Inktella" },
       { property: "og:description", content: "One book. Hundreds of perspectives." },
       { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ReviewPage,
