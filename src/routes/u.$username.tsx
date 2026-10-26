@@ -52,7 +52,10 @@ export const Route = createFileRoute("/u/$username")({
         content: `Reviews, shelves and short thoughts from @${params.username} on Inktella.`,
       },
       { property: "og:title", content: `@${params.username} — Inktella` },
-      { property: "og:description", content: `Reviews, shelves and short thoughts from @${params.username}.` },
+      {
+        property: "og:description",
+        content: `Reviews, shelves and short thoughts from @${params.username}.`,
+      },
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -63,14 +66,14 @@ export const Route = createFileRoute("/u/$username")({
 type DrawerKind = "hire" | "support" | "reviews" | null;
 
 const statDefinitions = [
-  ["Reviews", "reviews", BookOpen, "text-primary", "bg-primary/10"],
-  ["Thoughts", "thoughts", MessageCircle, "text-seg-2", "bg-seg-2/15"],
-  ["Books read", "read", BookOpen, "text-seg-1", "bg-seg-1/10"],
-  ["Reading now", "reading", Sparkles, "text-not-recommend", "bg-not-recommend/10"],
-  ["Want to read", "want", Star, "text-seg-3", "bg-seg-3/10"],
-  ["Followers", "followers", Users, "text-primary", "bg-primary/10"],
-  ["Following", "following", Users, "text-seg-1", "bg-seg-1/10"],
-  ["All likes", "likes", Heart, "text-not-recommend", "bg-not-recommend/10"],
+  ["reviews", "reviews"],
+  ["thoughts", "thoughts"],
+  ["books read", "read"],
+  ["reading now", "reading"],
+  ["want to read", "want"],
+  ["followers", "followers"],
+  ["following", "following"],
+  ["likes", "likes"],
 ] as const;
 
 function CountUp({ value }: { value: number }) {
@@ -158,12 +161,9 @@ function Profile() {
       </div>
     );
   const prof = p.data;
-  const stats = statDefinitions.map(([label, key, Icon, iconColor, iconBg]) => ({
+  const stats = statDefinitions.map(([label, key]) => ({
     label,
     key,
-    Icon,
-    iconColor,
-    iconBg,
     value: counts.data?.[key] ?? 0,
   }));
 
@@ -210,35 +210,17 @@ function Profile() {
         </div>
       </section>
       <WavyDivider />
-      <section
-        aria-label="Profile statistics"
-        className="overflow-hidden rounded-2xl border bg-card shadow-soft"
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-4">
-          {stats.map(({ label, value, Icon, iconColor, iconBg }, i) => (
+      <section aria-label="Profile statistics" className="border-y py-3">
+        <div className="grid grid-cols-2 gap-y-2 sm:grid-cols-4 sm:divide-x sm:divide-border">
+          {stats.map(({ label, value }) => (
             <div
               key={label}
-              className={cn(
-                "group relative flex flex-col items-center gap-1.5 border-border px-3 py-6 text-center transition-colors hover:bg-muted/50",
-                i % 2 === 1 && "border-l",
-                i >= 2 && "border-t",
-                "sm:border-l sm:[&:nth-child(4n+1)]:border-l-0 sm:[&:nth-child(-n+4)]:border-t-0",
-              )}
+              className="flex items-baseline justify-center gap-1.5 px-2 text-center"
             >
-              <span
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110",
-                  iconBg,
-                )}
-              >
-                <Icon className={cn("size-4", iconColor)} />
-              </span>
-              <p className="font-display text-3xl font-semibold tracking-tight">
+              <strong className="font-display text-xl font-semibold tabular-nums">
                 <CountUp value={value} />
-              </p>
-              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                {label}
-              </p>
+              </strong>
+              <span className="font-serif text-xs italic text-muted-foreground">{label}</span>
             </div>
           ))}
         </div>
@@ -308,7 +290,15 @@ function Profile() {
         <SectionTitle>Following</SectionTitle>
         <FollowingList uid={prof.id} />
       </section>
-      {userId === prof.id && <><WavyDivider /><section><SectionTitle>The Trail</SectionTitle><ProfileList uid={prof.id} kind="trail" /></section></>}
+      {userId === prof.id && (
+        <>
+          <WavyDivider />
+          <section>
+            <SectionTitle>The Trail</SectionTitle>
+            <ProfileList uid={prof.id} kind="trail" />
+          </section>
+        </>
+      )}
       <WavyDivider />
       <section>
         <SectionTitle>Elsewhere</SectionTitle>
@@ -323,9 +313,11 @@ function Profile() {
               <WalletCards />
             </SocialLink>
           )}
-          {prof.contact_url && isHttpUrl(prof.contact_url) && <SocialLink href={prof.contact_url} label="Contact">
-            <Mail />
-          </SocialLink>}
+          {prof.contact_url && isHttpUrl(prof.contact_url) && (
+            <SocialLink href={prof.contact_url} label="Contact">
+              <Mail />
+            </SocialLink>
+          )}
         </div>
       </section>
       <Drawer open={drawer !== null} onOpenChange={(open) => !open && setDrawer(null)}>
@@ -355,25 +347,50 @@ function Profile() {
               <div className="px-4 pb-4">
                 <div className="rounded-lg bg-muted p-4 text-sm">
                   <p className="font-medium">Reviewer rates</p>
-                   <p className="mt-1 whitespace-pre-line text-muted-foreground">{prof.reviewer_rates || "No rates listed."}</p>
-                   {prof.publication_details && <p className="mt-3 whitespace-pre-line">{prof.publication_details}</p>}
+                  <p className="mt-1 whitespace-pre-line text-muted-foreground">
+                    {prof.reviewer_rates || "No rates listed."}
+                  </p>
+                  {prof.publication_details && (
+                    <p className="mt-3 whitespace-pre-line">{prof.publication_details}</p>
+                  )}
                 </div>
-                 {prof.contact_url && isHttpUrl(prof.contact_url) ? <Button className="mt-4 w-full" asChild><a href={prof.contact_url} target="_blank" rel="noopener noreferrer">Let&apos;s talk</a></Button> : <p className="mt-4 text-sm text-muted-foreground">No contact link provided.</p>}
+                {prof.contact_url && isHttpUrl(prof.contact_url) ? (
+                  <Button className="mt-4 w-full" asChild>
+                    <a href={prof.contact_url} target="_blank" rel="noopener noreferrer">
+                      Let&apos;s talk
+                    </a>
+                  </Button>
+                ) : (
+                  <p className="mt-4 text-sm text-muted-foreground">No contact link provided.</p>
+                )}
               </div>
             ) : (
               <div className="grid gap-2 px-4 pb-4 sm:grid-cols-2">
-                 {prof.coffee_url && <Button variant="outline" asChild>
-                   <a href={prof.coffee_url} target="_blank" rel="noopener noreferrer">
-                    <Heart data-icon="inline-start" /> Buy me a coffee
-                  </a>
-                 </Button>}
-                 {prof.paypal_url && <Button variant="outline" asChild>
-                   <a href={prof.paypal_url} target="_blank" rel="noopener noreferrer">
-                    <WalletCards data-icon="inline-start" /> PayPal
-                  </a>
-                 </Button>}
-                 {prof.support_url && <Button variant="outline" asChild><a href={prof.support_url} target="_blank" rel="noopener noreferrer"><Heart />Support this reader</a></Button>}
-                 {!prof.coffee_url && !prof.paypal_url && !prof.support_url && <p className="text-sm text-muted-foreground">No support links provided.</p>}
+                {prof.coffee_url && (
+                  <Button variant="outline" asChild>
+                    <a href={prof.coffee_url} target="_blank" rel="noopener noreferrer">
+                      <Heart data-icon="inline-start" /> Buy me a coffee
+                    </a>
+                  </Button>
+                )}
+                {prof.paypal_url && (
+                  <Button variant="outline" asChild>
+                    <a href={prof.paypal_url} target="_blank" rel="noopener noreferrer">
+                      <WalletCards data-icon="inline-start" /> PayPal
+                    </a>
+                  </Button>
+                )}
+                {prof.support_url && (
+                  <Button variant="outline" asChild>
+                    <a href={prof.support_url} target="_blank" rel="noopener noreferrer">
+                      <Heart />
+                      Support this reader
+                    </a>
+                  </Button>
+                )}
+                {!prof.coffee_url && !prof.paypal_url && !prof.support_url && (
+                  <p className="text-sm text-muted-foreground">No support links provided.</p>
+                )}
               </div>
             )}
             <DrawerFooter>
@@ -405,7 +422,8 @@ function Bio({ text }: { text: string }) {
         {text}
       </p>
       {long && (
-        <Button variant="ghost"
+        <Button
+          variant="ghost"
           className="mt-2 block w-full text-center text-sm font-medium text-primary hover:underline"
           onClick={() => setExpanded(!expanded)}
         >
@@ -447,7 +465,7 @@ function ReviewedCovers({ uid, onViewMore }: { uid: string; onViewMore: () => vo
           .select(REVIEW_SELECT + ", is_draft")
           .eq("user_id", uid)
           .eq("is_draft", false)
-           .eq("is_hidden", false)
+          .eq("is_hidden", false)
           .order("updated_at", { ascending: false })
           .limit(8)
       ).data as unknown as ReviewCardData[],
@@ -465,7 +483,8 @@ function ReviewedCovers({ uid, onViewMore }: { uid: string; onViewMore: () => vo
           </Link>
         ))}
       </div>
-      <Button variant="ghost"
+      <Button
+        variant="ghost"
         type="button"
         onClick={onViewMore}
         className="mt-5 block w-full text-center text-sm font-medium text-primary hover:underline"
@@ -539,17 +558,57 @@ function UserThoughts({ uid }: { uid: string }) {
   return current ? <ThoughtCard key={current.id} t={current} /> : null;
 }
 type ShelfBook = { id: string; slug: string; title: string; cover_url: string | null };
-function ProfileList({ uid, kind }: { uid: string; kind: "favourite" | "recommendation" | "trail" }) {
-  const q = useQuery({ queryKey: kind === "trail" ? ["trail", uid] : ["profile-list", uid, kind], queryFn: async () => {
-    const result = kind === "trail"
-      ? await supabase.from("book_views").select("books(id, slug, title, cover_url)").eq("user_id", uid).order("viewed_at", { ascending: false }).limit(30)
-      : await supabase.from("book_lists").select("books(id, slug, title, cover_url)").eq("user_id", uid).eq("kind", kind).order("created_at", { ascending: false }).limit(200);
-    if (result.error) throw result.error;
-    return (result.data ?? []).map((row) => row.books).filter((book): book is ShelfBook => Boolean(book));
-  }});
+function ProfileList({
+  uid,
+  kind,
+}: {
+  uid: string;
+  kind: "favourite" | "recommendation" | "trail";
+}) {
+  const q = useQuery({
+    queryKey: kind === "trail" ? ["trail", uid] : ["profile-list", uid, kind],
+    queryFn: async () => {
+      const result =
+        kind === "trail"
+          ? await supabase
+              .from("book_views")
+              .select("books(id, slug, title, cover_url)")
+              .eq("user_id", uid)
+              .order("viewed_at", { ascending: false })
+              .limit(30)
+          : await supabase
+              .from("book_lists")
+              .select("books(id, slug, title, cover_url)")
+              .eq("user_id", uid)
+              .eq("kind", kind)
+              .order("created_at", { ascending: false })
+              .limit(200);
+      if (result.error) throw result.error;
+      return (result.data ?? [])
+        .map((row) => row.books)
+        .filter((book): book is ShelfBook => Boolean(book));
+    },
+  });
   if (q.isError) return <p className="mt-3 text-sm text-muted-foreground">Unable to load books.</p>;
-  if (q.isSuccess && !q.data.length) return <EmptyState title={kind === "trail" ? "No recently viewed books" : "This shelf is empty"} />;
-  return <div className="mt-4 flex gap-3 overflow-x-auto pb-2">{(q.data ?? []).map((book) => <Link key={book.id} to="/books/$slug" params={{ slug: book.slug }} className="w-28 shrink-0 sm:w-32"><BookCover src={book.cover_url} title={book.title} /><p className="mt-1.5 line-clamp-2 text-xs">{book.title}</p></Link>)}</div>;
+  if (q.isSuccess && !q.data.length)
+    return (
+      <EmptyState title={kind === "trail" ? "No recently viewed books" : "This shelf is empty"} />
+    );
+  return (
+    <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+      {(q.data ?? []).map((book) => (
+        <Link
+          key={book.id}
+          to="/books/$slug"
+          params={{ slug: book.slug }}
+          className="w-28 shrink-0 sm:w-32"
+        >
+          <BookCover src={book.cover_url} title={book.title} />
+          <p className="mt-1.5 line-clamp-2 text-xs">{book.title}</p>
+        </Link>
+      ))}
+    </div>
+  );
 }
 type FollowingProfile = {
   id: string;
