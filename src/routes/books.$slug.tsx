@@ -384,7 +384,20 @@ function MobileBookHeader({
             ))}
           </div>
         </div>
-        {book.genres?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{book.genres.map((genre: string) => <Link key={genre} to="/search" search={{ q: genre }} className="max-w-full break-words rounded bg-secondary px-2 py-1 text-xs text-secondary-foreground">{genre}</Link>)}</div>}
+        {book.genres?.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {book.genres.map((genre: string) => (
+              <Link
+                key={genre}
+                to="/search"
+                search={{ q: genre }}
+                className="max-w-full break-words rounded bg-secondary px-2 py-1 text-xs text-secondary-foreground"
+              >
+                {genre}
+              </Link>
+            ))}
+          </div>
+        )}
         <div className="mt-3 space-y-1 break-words text-xs text-muted-foreground">
           {book.publication_year && <p>{book.publication_year}</p>}
           {book.publisher && <p>{book.publisher}</p>}
@@ -465,18 +478,20 @@ function MobileDrawer({ label, children }: { label: string; children: ReactNode 
 
 function MobileStats({ stats }: { stats: { want: number; read: number; reading: number } }) {
   return (
-    <section className="mt-8 grid grid-cols-3 border-y py-5 text-center">
-      <div className="border-r">
-        <strong className="block text-2xl">{stats.read}</strong>
-        <span className="text-xs text-muted-foreground">Read</span>
-      </div>
-      <div className="border-r">
-        <strong className="block text-2xl">{stats.want}</strong>
-        <span className="text-xs text-muted-foreground">Want to read</span>
-      </div>
-      <div>
-        <strong className="block text-2xl">{stats.reading}</strong>
-        <span className="text-xs text-muted-foreground">Reading</span>
+    <section aria-label="Reading statistics" className="mt-6 border-y py-3">
+      <div className="flex items-baseline justify-center divide-x divide-border">
+        <div className="flex min-w-0 flex-1 items-baseline justify-center gap-1.5 px-2 first:pl-0 last:pr-0">
+          <strong className="text-xl font-semibold tabular-nums">{stats.read}</strong>
+          <span className="font-serif text-xs italic text-muted-foreground">read</span>
+        </div>
+        <div className="flex min-w-0 flex-1 items-baseline justify-center gap-1.5 px-2">
+          <strong className="text-xl font-semibold tabular-nums">{stats.want}</strong>
+          <span className="font-serif text-xs italic text-muted-foreground">want to read</span>
+        </div>
+        <div className="flex min-w-0 flex-1 items-baseline justify-center gap-1.5 px-2 first:pl-0 last:pr-0">
+          <strong className="text-xl font-semibold tabular-nums">{stats.reading}</strong>
+          <span className="font-serif text-xs italic text-muted-foreground">reading</span>
+        </div>
       </div>
     </section>
   );
