@@ -158,10 +158,12 @@ function Profile() {
       </div>
     );
   const prof = p.data;
-  const stats = statDefinitions.map(([label, key, Icon]) => ({
+  const stats = statDefinitions.map(([label, key, Icon, iconColor, iconBg]) => ({
     label,
     key,
     Icon,
+    iconColor,
+    iconBg,
     value: counts.data?.[key] ?? 0,
   }));
 
