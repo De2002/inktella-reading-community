@@ -212,15 +212,36 @@ function Profile() {
       <WavyDivider />
       <section
         aria-label="Profile statistics"
-        className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-8"
+        className="overflow-hidden rounded-2xl border bg-card shadow-soft"
       >
-        {stats.map(({ label, value, Icon }) => (
-          <div key={label} className="rounded-lg border bg-card px-2 py-3 text-center">
-            <Icon className="mx-auto mb-1 size-4 text-muted-foreground" />
-            <p className="font-display text-xl font-semibold">{value}</p>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
-          </div>
-        ))}
+        <div className="grid grid-cols-2 sm:grid-cols-4">
+          {stats.map(({ label, value, Icon, iconColor, iconBg }, i) => (
+            <div
+              key={label}
+              className={cn(
+                "group relative flex flex-col items-center gap-1.5 border-border px-3 py-6 text-center transition-colors hover:bg-muted/50",
+                i % 2 === 1 && "border-l",
+                i >= 2 && "border-t",
+                "sm:border-l sm:[&:nth-child(4n+1)]:border-l-0 sm:[&:nth-child(-n+4)]:border-t-0",
+              )}
+            >
+              <span
+                className={cn(
+                  "flex size-9 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110",
+                  iconBg,
+                )}
+              >
+                <Icon className={cn("size-4", iconColor)} />
+              </span>
+              <p className="font-display text-3xl font-semibold tracking-tight">
+                <CountUp value={value} />
+              </p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
       </section>
       <WavyDivider />
       <section>
