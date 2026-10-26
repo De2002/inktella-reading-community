@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
+- Header and loading logos use optimized inline brand image data from src/assets/brand.ts, not host-relative CDN endpoints. Why: branding must render before hydration and on self-hosted deployments without Lovable asset routing.
 - Community rules (review word minimum, vote uniqueness, vote tallies, privileged columns) are enforced in the database via constraints, triggers and security-definer RPCs; the UI only mirrors them via src/lib/rules.ts. Why: the frontend must never be authoritative.
 - Vote results are read only through get_recometer / get_consensus RPCs; raw vote rows are visible only to their owner. Why: privacy and server-calculated totals.
 - Book creation goes through the create_book security-definer RPC (called from src/lib/books.functions.ts with the user's session; dedupe + slug + authors in SQL). Why: the app must not need a service role key, so it can run on any host with only the publishable key.
