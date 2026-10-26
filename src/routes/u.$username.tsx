@@ -14,7 +14,7 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookCover } from "@/components/BookCover";
 import { PageLoader } from "@/components/Logo";
 import {
@@ -63,15 +63,58 @@ export const Route = createFileRoute("/u/$username")({
 type DrawerKind = "hire" | "support" | "reviews" | null;
 
 const statDefinitions = [
-  ["Reviews", "reviews", BookOpen],
-  ["Thoughts", "thoughts", MessageCircle],
-  ["Books read", "read", BookOpen],
-  ["Reading now", "reading", Sparkles],
-  ["Want to read", "want", Star],
-  ["Followers", "followers", Users],
-  ["Following", "following", Users],
-  ["All likes", "likes", Heart],
+  ["Reviews", "reviews", BookOpen, "text-primary", "bg-primary/10"],
+  ["Thoughts", "thoughts", MessageCircle, "text-seg-2", "bg-seg-2/15"],
+  ["Books read", "read", BookOpen, "text-seg-1", "bg-seg-1/10"],
+  ["Reading now", "reading", Sparkles, "text-not-recommend", "bg-not-recommend/10"],
+  ["Want to read", "want", Star, "text-seg-3", "bg-seg-3/10"],
+  ["Followers", "followers", Users, "text-primary", "bg-primary/10"],
+  ["Following", "following", Users, "text-seg-1", "bg-seg-1/10"],
+  ["All likes", "likes", Heart, "text-not-recommend", "bg-not-recommend/10"],
 ] as const;
+
+function CountUp({ value }: { value: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const run = () => {
+      if (value <= 0) {
+        setShown(0);
+        return;
+      }
+      const start = performance.now();
+      const duration = 900;
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        setShown(Math.round(value * (1 - Math.pow(1 - t, 3))));
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+    if (typeof IntersectionObserver === "undefined") {
+      run();
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          run();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [value]);
+  return <span ref={ref}>{shown.toLocaleString()}</span>;
+}
 
 function WavyDivider() {
   return (
@@ -115,10 +158,12 @@ function Profile() {
       </div>
     );
   const prof = p.data;
-  const stats = statDefinitions.map(([label, key, Icon]) => ({
+  const stats = statDefinitions.map(([label, key, Icon, iconColor, iconBg]) => ({
     label,
     key,
     Icon,
+    iconColor,
+    iconBg,
     value: counts.data?.[key] ?? 0,
   }));
 
@@ -167,15 +212,36 @@ function Profile() {
       <WavyDivider />
       <section
         aria-label="Profile statistics"
-        className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-8"
+        className="overflow-hidden rounded-2xl border bg-card shadow-soft"
       >
-        {stats.map(({ label, value, Icon }) => (
-          <div key={label} className="rounded-lg border bg-card px-2 py-3 text-center">
-            <Icon className="mx-auto mb-1 size-4 text-muted-foreground" />
-            <p className="font-display text-xl font-semibold">{value}</p>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
-          </div>
-        ))}
+        <div className="grid grid-cols-2 sm:grid-cols-4">
+          {stats.map(({ label, value, Icon, iconColor, iconBg }, i) => (
+            <div
+              key={label}
+              className={cn(
+                "group relative flex flex-col items-center gap-1.5 border-border px-3 py-6 text-center transition-colors hover:bg-muted/50",
+                i % 2 === 1 && "border-l",
+                i >= 2 && "border-t",
+                "sm:border-l sm:[&:nth-child(4n+1)]:border-l-0 sm:[&:nth-child(-n+4)]:border-t-0",
+              )}
+            >
+              <span
+                className={cn(
+                  "flex size-9 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110",
+                  iconBg,
+                )}
+              >
+                <Icon className={cn("size-4", iconColor)} />
+              </span>
+              <p className="font-display text-3xl font-semibold tracking-tight">
+                <CountUp value={value} />
+              </p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
       </section>
       <WavyDivider />
       <section>
